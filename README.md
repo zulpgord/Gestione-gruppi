@@ -47,7 +47,21 @@ Le skill si richiamano a vicenda dove ha senso: `diagnosi-team` precede
 `facilita-retrospettiva` (il format si scegli sullo stadio del gruppo), e `piano-cambiamento`
 precede `annuncio-organizzativo` (la comunicazione esegue il piano, non lo sostituisce).
 
-## Installazione
+## Uso da telefono (voce)
+
+Istruzioni in [`Mobile/`](./Mobile). In sintesi: un Progetto su claude.ai con le istruzioni
+di [`Mobile/ISTRUZIONI-PROGETTO.md`](./Mobile/ISTRUZIONI-PROGETTO.md) — che fondono i cinque
+agent in un unico set riscritto per il parlato — più le skill caricate come zip.
+
+Il criterio di progetto: **a voce la diagnosi e la prima mossa, per iscritto il piano.**
+Uno script di feedback o una roadmap a fasi letti ad alta voce sono inascoltabili, quindi le
+istruzioni tengono i turni parlati brevi e producono il documento strutturato solo su richiesta.
+
+```bash
+./Mobile/crea-zip-skills.sh      # genera gli 8 zip da caricare
+```
+
+## Installazione (desktop, Claude Code)
 
 ```bash
 # agent — globali, disponibili in ogni progetto
