@@ -151,3 +151,66 @@ un'altra sessione: applica sostituzioni esatte e si rifiuta di scrivere se una n
 una volta sola. Resta qui come esempio del modo meno rischioso di modificare questo file a
 quattro mani.
 
+## Versione 13 — i tredici difetti
+
+### Privacy (il più serio)
+
+Il database era dichiarato **senza regole**, quindi valeva il default: chiunque potesse aprire
+l'artifact ed essere firmato leggeva casi, diagnosi, livelli di sicurezza psicologica e impegni
+con le iniziali delle persone. Invisibile finché l'app resta privata, disastroso il giorno in
+cui la condividi. Ora `schede`, `impegni`, `profilo` e `diario` hanno `read: admin,
+write: admin`: leggono solo il proprietario e chi ha accesso in modifica. **Verificato** con una
+lettura a livello `view` e una a livello `interact`: entrambe non restituiscono nulla.
+
+I percorsi dei documenti non sono stati spostati — c'erano già casi reali, e una migrazione di
+percorso li avrebbe orfanati. Le regole ottengono lo stesso risultato senza toccare un dato.
+
+Il **contesto dal diario personale** ora è **spento per impostazione predefinita**: accenderlo
+significa mandare a Claude anche le note private, e un'istruzione di riservatezza nel prompt è
+una richiesta di comportamento, non un filtro.
+
+### La plancia mentiva
+
+- **Lo score contava tutti gli impegni**, risolti inclusi: un caso chiuso bene lo teneva alto
+  per sempre, uno vecchio con impegni mai spuntati lo teneva basso in eterno. Ora conta solo i
+  casi aperti e in lavorazione, e il sottotitolo lo dice.
+- **Gli impegni erano collegati al caso per nome**: rinominare un caso li scollegava, e due casi
+  omonimi se li scambiavano. Ora c'è `casoId`; il titolo resta come ripiego per le righe già
+  scritte, così nulla si rompe.
+
+### Perdita di dati e scala
+
+- **Annulla** sull'eliminazione di un impegno: una barra per dodici secondi che lo riscrive con
+  lo stesso id. Era l'unico punto dove un tocco di troppo perdeva un dato per sempre.
+- **Export** in Markdown di casi, impegni e contesto, dalla plancia.
+- **Finestre alzate** (200 casi, 600 impegni) e ordinate per data, con un avviso visibile quando
+  il limite è raggiunto: prima le cose sparivano in silenzio.
+- **La conversazione in corso** è anche in `data/users/me/sessione`, privato per costruzione:
+  la riprendi da un altro dispositivo. `localStorage` resta come copia locale immediata.
+
+### Difetti che avevo introdotto io con la grafica
+
+- I numeri **ripartivano da zero a ogni modifica** del database, perché la plancia si ridisegna
+  a ogni snapshot. Ora l'animazione parte solo al primo disegno e quando entri nella vista.
+- I ridisegni sono **accorpati in un frame** e la **posizione di scorrimento** viene conservata.
+- Il **tooltip del grafico** non si apriva al tocco (`mouseenter` non arriva da un dito): ora
+  risponde anche a `pointerdown`, con chiusura dopo due secondi e mezzo.
+
+### Diario
+
+- `update_file` del connettore Drive **cambia solo i metadati**: l'ho verificato sullo schema del
+  tool, quindi il commento nel codice era giusto e il ciclo crea-e-cestina è forzato. Mitigato
+  tenendo l'**impronta del testo**: una nota identica non viene riscritta, e la cronologia di
+  Drive si spezza molto meno spesso.
+- La ricerca delle note da importare girava su **tutto il Drive**: ora è limitata alle due
+  cartelle del vault, con due query separate, e scarica al massimo quattro file.
+- Ripieghi su `nextPageToken`/`next_page_token` e su `viewUrl`, i soli campi di risposta che
+  restano non verificati.
+
+Gli **argomenti** delle quattro chiamate a Drive sono invece verificati sugli schemi dei tool:
+`fileId`, `title`, `parentId`, `textContent`, `contentMimeType`,
+`disableConversionToGoogleType`, `query`, `pageSize`, `excludeContentSnippets`. Tutti corretti.
+
+`correzioni-v13.mjs` è lo script usato: 36 sostituzioni esatte, con rifiuto a scrivere se una
+non corrisponde una volta sola.
+

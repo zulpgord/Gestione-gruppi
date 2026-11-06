@@ -231,6 +231,14 @@ main .wrap{padding-block:16px 10px;display:flex;flex-direction:column;gap:16px}
 
 /* grafico */
 .chartwrap{position:relative}
+.chartwrap.statico .bar,.chartwrap.statico .barOmbra{animation:none}
+.annulla{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;
+  background:var(--fg);color:var(--bg);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:13px;
+  font-size:12.5px;font-weight:600;box-shadow:var(--e3);animation:suscard .22s ease both;max-width:min(94vw,430px)}
+.annulla span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.annulla button{appearance:none;border:0;background:transparent;color:var(--bg);font:inherit;font-weight:700;
+  text-decoration:underline;cursor:pointer;padding:0;flex:none}
+.avviso{border-left:2px solid var(--attesa);padding-left:11px;font-size:12px;color:var(--muted);line-height:1.45}
 svg.chart{display:block;width:100%;height:auto}
 .gl{stroke:var(--line-soft);stroke-width:1}
 .bar{fill:url(#gBar);transform-box:fill-box;transform-origin:bottom;
@@ -488,8 +496,8 @@ var fermo=false, puntatoreFine=false;
 try{ fermo=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
      puntatoreFine=window.matchMedia("(hover: hover) and (pointer: fine)").matches; }catch(e){}
 /* conta fino a un numero, invece di comparire */
-function conta(nodo,fino){
-  if(fermo||fino<=0){ nodo.textContent=String(fino); return; }
+function conta(nodo,fino,anima){
+  if(fermo||anima===false||fino<=0){ nodo.textContent=String(fino); return; }
   var dur=Math.min(900,420+fino*14), t0=null;
   function passo(t){
     if(t0===null)t0=t;
@@ -500,8 +508,8 @@ function conta(nodo,fino){
   nodo.textContent="0"; requestAnimationFrame(passo);
 }
 /* riempi una pista dopo l'inserimento, cosi' la transizione parte */
-function riempi(barra,perc){
-  if(fermo){ barra.style.transition="none"; barra.style.width=perc+"%"; return; }
+function riempi(barra,perc,anima){
+  if(fermo||anima===false){ barra.style.transition="none"; barra.style.width=perc+"%"; return; }
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ barra.style.width=perc+"%"; }); });
 }
 /* inclinazione al puntatore: solo mouse, mai al tocco, mai con movimento ridotto */
@@ -552,18 +560,57 @@ function rendi(node,testo){
 }
 function piano(md){ var t=document.createElement("div"); t.innerHTML=pulisci(window.marked?window.marked.parse(md):md);
   return (t.textContent||"").replace(/\s+/g," ").trim(); }
+/* una barra per annullare l'ultima eliminazione: senza, un tocco di troppo perde un dato */
+var annullaT=null;
+function annulla(msg,azione){
+  var v=document.querySelector(".annulla"); if(v)v.remove();
+  clearTimeout(annullaT);
+  var b=el("div","annulla"); b.appendChild(el("span",null,msg));
+  var t=el("button",null,"Annulla");
+  t.onclick=async function(){
+    t.disabled=true; t.textContent="…";
+    try{ await azione(); b.remove(); }catch(e){ t.textContent="Non riesco"; }
+  };
+  b.appendChild(t);
+  var x=el("button",null,"×"); x.setAttribute("aria-label","Chiudi"); x.onclick=function(){b.remove();};
+  b.appendChild(x);
+  document.body.appendChild(b);
+  annullaT=setTimeout(function(){ b.remove(); },12000);
+}
 function pill(chiave){
   var s=STATI[chiave]||STATI.aperto, p=el("span","pill "+s[1]);
   p.appendChild(el("i","dot")); p.appendChild(document.createTextNode(s[0])); return p;
 }
 
 /* ===================== sessione ===================== */
+function turniLeggeri(){
+  return turni.slice(-14).map(function(t){return {role:t.role,content:String(t.content).slice(0,9000)};});
+}
 function salvaSessione(){
   try{
-    if(!turni.length){ localStorage.removeItem(KEY); return; }
-    var p=turni.slice(-14).map(function(t){return {role:t.role,content:String(t.content).slice(0,9000)};});
-    localStorage.setItem(KEY,JSON.stringify({turni:p,modo:modo,ts:Date.now()}));
+    if(!turni.length){ localStorage.removeItem(KEY); }
+    else localStorage.setItem(KEY,JSON.stringify({turni:turniLeggeri(),modo:modo,ts:Date.now()}));
   }catch(e){}
+  salvaSessioneDb();
+}
+/* la stessa conversazione anche sugli altri dispositivi: sotto data/users/me, che resta privato */
+var VIA="data/users/me/sessione";
+async function salvaSessioneDb(){
+  if(!db||!canWrite)return;
+  try{
+    if(!turni.length){ await db.doc(VIA).delete(); return; }
+    await db.doc(VIA).set({turni:turniLeggeri(),modo:modo,ts:Date.now()});
+  }catch(e){}
+}
+async function leggiSessioneDb(){
+  if(!db)return null;
+  try{
+    var g=await db.doc(VIA).get(); if(!g.exists)return null;
+    var v=g.data()||{};
+    if(!v.turni||!v.turni.length)return null;
+    if(Date.now()-(v.ts||0)>1000*60*60*24*10)return null;
+    return {turni:v.turni,modo:v.modo,ts:v.ts||0};
+  }catch(e){ return null; }
 }
 function leggiSessione(){
   try{
@@ -594,7 +641,14 @@ function leggi(testo,btn){
 function statoDi(s){ return STATI[s&&s.stato]?s.stato:"aperto"; }
 function apertiImp(){ return impegni.filter(function(i){return !i.fatto;})
   .sort(function(a,b){var x=a.scadenza||"9999",y=b.scadenza||"9999";return x<y?-1:x>y?1:0;}); }
-function impDi(titolo){ return impegni.filter(function(i){return i.scheda===titolo;}); }
+/* un impegno appartiene al caso per id; il titolo resta solo come ripiego per le righe vecchie */
+function impDi(s){ if(!s)return [];
+  return impegni.filter(function(i){ return i.casoId?(i.casoId===s.id):(i.scheda===s.titolo); }); }
+function casoDi(i){ return schede.filter(function(s){
+  return i.casoId?(s.id===i.casoId):(s.titolo===i.scheda); })[0]; }
+/* lo score guarda solo i casi aperti e in lavorazione: altrimenti i chiusi lo falsano per sempre */
+function impAttivi(){ return impegni.filter(function(i){
+  var s=casoDi(i); return !s||statoDi(s)!=="risolto"; }); }
 function aggiornaBadge(){
   var n=apertiImp().length, b=document.getElementById("bdg");
   b.hidden=!n; b.textContent=n;
@@ -621,15 +675,23 @@ function chiusiPerSettimana(){
 }
 
 /* ===================== plancia ===================== */
+var animaPlancia=true, ridisegnaAtteso=false, tronco={schede:false,impegni:false};
+function pianificaPlancia(){
+  if(vista!=="plancia"||ridisegnaAtteso)return;
+  ridisegnaAtteso=true;
+  requestAnimationFrame(function(){ ridisegnaAtteso=false; if(vista==="plancia")disegnaPlancia(); });
+}
 function disegnaPlancia(){
+  var mainEl=document.getElementById("main"), scrollPrec=mainEl.scrollTop;
   plancia.innerHTML="";
   if(!db){
     var o=el("div","panel"); var ob=el("div","pb");
     ob.appendChild(el("div","offline","La plancia legge i casi e gli impegni salvati: serve Claude e l'accesso firmato. Questa visualizzazione non li raggiunge."));
     o.appendChild(ob); plancia.appendChild(o); return;
   }
-  var tot=impegni.length, chiusi=impegni.filter(function(i){return i.fatto;}).length;
-  var scad=apertiImp().filter(function(i){return scaduto(i.scadenza);}).length;
+  var attivi=impAttivi();
+  var tot=attivi.length, chiusi=attivi.filter(function(i){return i.fatto;}).length;
+  var scad=attivi.filter(function(i){return !i.fatto&&scaduto(i.scadenza);}).length;
   var perc=tot?Math.round(chiusi/tot*100):0;
   var c={aperto:0,corso:0,risolto:0};
   schede.forEach(function(s){ c[statoDi(s)]++; });
@@ -638,9 +700,9 @@ function disegnaPlancia(){
   var k=el("div","kpi");
   var iT=0;
   function tile(lab,val,uni,cls){
-    var t=el("div","tile sali"); t.style.setProperty("--i",iT++);
+    var t=el("div","tile"+(animaPlancia?" sali":"")); t.style.setProperty("--i",iT++);
     t.appendChild(el("div","k",lab));
-    var v=el("div","v num"); t.appendChild(v); conta(v,val);
+    var v=el("div","v num"); t.appendChild(v); conta(v,val,animaPlancia);
     if(uni){ var u=el("div","u"); if(cls){ var p=el("span","pill "+cls); p.appendChild(el("i","dot"));
         p.appendChild(document.createTextNode(uni)); u.appendChild(p); } else u.textContent=uni; t.appendChild(u); }
     inclina(t,5); k.appendChild(t);
@@ -654,19 +716,19 @@ function disegnaPlancia(){
   /* score */
   var sp=el("div","panel");
   var sh=el("div","ph"); sh.appendChild(el("h2",null,"Avanzamento"));
-  sh.appendChild(el("p",null,"Quota di impegni presi che risultano chiusi. Non misura se il problema è risolto: misura se quello che hai deciso di fare è stato fatto."));
+  sh.appendChild(el("p",null,"Quota di impegni chiusi sui casi aperti e in lavorazione; i casi risolti non entrano nel conto. Non misura se il problema è risolto: misura se quello che hai deciso di fare è stato fatto."));
   sp.appendChild(sh);
   var sb=el("div","pb");
   if(!tot){
-    var e0=el("div","empty"); e0.appendChild(el("p","Nessun impegno registrato. Archivia una conversazione e le azioni con una data finiscono qui."));
+    var e0=el("div","empty"); e0.appendChild(el("p","Nessun impegno aperto. Archivia una conversazione e le azioni con una data finiscono qui."));
     sb.appendChild(e0);
   }else{
     var sc=el("div","score");
     var big=el("div","big num"); var np=el("span"); big.appendChild(np); big.appendChild(el("i",null,"%"));
     sc.appendChild(big); conta(np,perc);
-    sc.appendChild(el("div","leg",chiusi+" impegni chiusi su "+tot+(scad?" · "+scad+" oltre la data concordata":"")));
+    sc.appendChild(el("div","leg",chiusi+" impegni chiusi su "+tot+" nei casi ancora aperti"+(scad?" · "+scad+" oltre la data concordata":"")));
     sb.appendChild(sc);
-    var m=el("div","meter"); var mi=el("i"); m.appendChild(mi); sb.appendChild(m); riempi(mi,perc);
+    var m=el("div","meter"); var mi=el("i"); m.appendChild(mi); sb.appendChild(m); riempi(mi,perc,animaPlancia);
   }
   sp.appendChild(sb); plancia.appendChild(sp);
 
@@ -709,18 +771,81 @@ function disegnaPlancia(){
   }else{
     var ord={aperto:0,corso:1,risolto:2};
     schede.slice().sort(function(a,b){ return ord[statoDi(a)]-ord[statoDi(b)]; }).forEach(function(s,i){
-      var n=caso(s); n.classList.add("sali"); n.style.setProperty("--i",i+3); inclina(n,2.2); cp.appendChild(n);
+      var n=caso(s);
+      if(animaPlancia){ n.classList.add("sali"); n.style.setProperty("--i",i+3); }
+      inclina(n,2.2); cp.appendChild(n);
     });
   }
   plancia.appendChild(cp);
+
+  if(tronco.schede||tronco.impegni){
+    var av=el("div","panel"); var avb=el("div","pb");
+    avb.appendChild(el("div","avviso","Sto mostrando solo i più recenti: "+
+      (tronco.schede?"i casi hanno superato i 200":"")+(tronco.schede&&tronco.impegni?" e ":"")+
+      (tronco.impegni?"gli impegni hanno superato i 600":"")+". Esporta e archivia i casi vecchi."));
+    av.appendChild(avb); plancia.appendChild(av);
+  }
+  var pie=el("div","row"); pie.style.margin="2px 0 6px";
+  if(downloads){
+    var be=el("button",null,"Esporta i dati");
+    be.onclick=async function(){
+      be.disabled=true; be.textContent="…";
+      try{ await downloads.save({filename:"gestione-gruppi-"+oggi()+".md",data:testoExport()}); be.textContent="Esportato"; }
+      catch(e){ be.textContent=(e&&e.code==="declined")?"Esporta i dati":"Non riesco"; }
+      finally{ setTimeout(function(){be.disabled=false; if(be.textContent!=="Esporta i dati")be.textContent="Esporta i dati";},1800); }
+    };
+    pie.appendChild(be);
+  }
+  if(mcp){ var bd=el("button",null,"Diario"); bd.onclick=sheetDiario; pie.appendChild(bd); }
+  if(pie.childNodes.length)plancia.appendChild(pie);
+
+  animaPlancia=false;
+  if(scrollPrec)mainEl.scrollTop=scrollPrec;
+}
+
+/* tutto quello che c'è dentro, in un file da tenere fuori da qui */
+function testoExport(){
+  var L=["# Gestione gruppi — esportazione del "+dataLunga(new Date().toISOString()),""];
+  if(profilo){
+    L.push("## Il mio contesto","");
+    PROF.forEach(function(f){ var v=(profilo[f[0]]||"").trim(); if(v)L.push("**"+f[1]+".** "+v,""); });
+  }
+  var ord={aperto:0,corso:1,risolto:2};
+  L.push("## Casi","");
+  if(!schede.length)L.push("_Nessuno._","");
+  schede.slice().sort(function(a,b){return ord[statoDi(a)]-ord[statoDi(b)];}).forEach(function(s){
+    L.push("### "+(s.titolo||"Senza nome")+" — "+(STATI[statoDi(s)]||STATI.aperto)[0].toLowerCase());
+    L.push("");
+    if(s.stadioCodice)L.push("- Stadio: "+s.stadioCodice);
+    if(s.sicurezzaLivello)L.push("- Sicurezza psicologica: "+s.sicurezzaLivello);
+    if((s.scarf||[]).length)L.push("- Bisogni sotto pressione: "+s.scarf.join(", "));
+    if(s.aggiornata)L.push("- Aggiornato: "+dataLunga(s.aggiornata));
+    L.push("");
+    CAMPI.forEach(function(f){ var v=(s[f[0]]||"").trim(); if(v)L.push("**"+f[1]+".** "+v,""); });
+    var mi=impDi(s);
+    L.push("**Impegni.**");
+    if(!mi.length)L.push("- _nessuno_");
+    mi.forEach(function(i){
+      L.push("- ["+(i.fatto?"x":" ")+"] "+(i.testo||"")+(i.chi?" — "+i.chi:"")+
+        (i.scadenza?" — entro "+i.scadenza:"")+(i.fatto&&i.chiuso?" (chiuso "+dataIt(i.chiuso)+")":""));
+    });
+    L.push("");
+  });
+  var orfani=impegni.filter(function(i){ return !casoDi(i); });
+  if(orfani.length){
+    L.push("## Impegni senza caso","");
+    orfani.forEach(function(i){ L.push("- ["+(i.fatto?"x":" ")+"] "+(i.testo||"")+(i.chi?" — "+i.chi:"")+(i.scadenza?" — entro "+i.scadenza:"")); });
+    L.push("");
+  }
+  return L.join("\n");
 }
 
 function grafico(w){
   var W=680,H=150, L=26,R=6,T=16,B=22, iw=W-L-R, ih=H-T-B;
   var max=Math.max.apply(null,w.map(function(x){return x.n;})), top=Math.max(1,max);
   var bw=iw/w.length, bar=Math.min(34,bw-8);
-  var wrap=el("div","chartwrap");
-  var tip=el("div","tip"); wrap.appendChild(tip);
+  var wrap=el("div","chartwrap"+(animaPlancia?"":" statico"));
+  var tip=el("div","tip"), tipT=null; wrap.appendChild(tip);
   var s=sv("svg",{class:"chart",viewBox:"0 0 "+W+" "+H,role:"img",
     "aria-label":"Impegni chiusi per settimana nelle ultime otto settimane"});
   var defs=sv("defs"), gr=sv("linearGradient",{id:"gBar",x1:"0",y1:"0",x2:"0",y2:"1"});
@@ -741,11 +866,18 @@ function grafico(w){
     var et=sv("text",{class:"tick",x:cx,y:H-7,"text-anchor":"middle"}); et.textContent=x.et; s.appendChild(et);
     if(x.n===max&&max>0){ var vl=sv("text",{class:"vlab",x:cx,y:y-5,"text-anchor":"middle"}); vl.textContent=x.n; s.appendChild(vl); }
     var hit=sv("rect",{class:"hit",x:L+bw*k,y:T,width:bw,height:ih});
-    hit.addEventListener("mouseenter",function(){
+    function mostraTip(){
       tip.textContent=x.n+(x.n===1?" impegno chiuso":" impegni chiusi")+" · settimana dal "+x.et;
       tip.style.left=(cx/W*100)+"%"; tip.style.top=(y/H*100)+"%"; tip.style.opacity="1";
+    }
+    function nascondiTip(){ tip.style.opacity="0"; }
+    hit.addEventListener("mouseenter",mostraTip);
+    hit.addEventListener("mouseleave",nascondiTip);
+    /* al tocco mouseenter non arriva: il dato va letto anche col dito */
+    hit.addEventListener("pointerdown",function(ev){
+      if(ev.pointerType==="mouse")return;
+      mostraTip(); clearTimeout(tipT); tipT=setTimeout(nascondiTip,2600);
     });
-    hit.addEventListener("mouseleave",function(){ tip.style.opacity="0"; });
     s.appendChild(hit);
   });
   wrap.appendChild(s);
@@ -793,11 +925,11 @@ function caso(s){
   c3.appendChild(sf); d.appendChild(c3);
 
   /* impegni */
-  var mine=impDi(s.titolo), ch=mine.filter(function(i){return i.fatto;}).length;
+  var mine=impDi(s), ch=mine.filter(function(i){return i.fatto;}).length;
   var pr=el("div","prog"); pr.style.marginTop="12px";
   if(mine.length){
     var m=el("div","meter"); var mi=el("i"); m.appendChild(mi);
-    pr.appendChild(m); riempi(mi,Math.round(ch/mine.length*100));
+    pr.appendChild(m); riempi(mi,Math.round(ch/mine.length*100),animaPlancia);
     var next=mine.filter(function(i){return !i.fatto&&i.scadenza;}).sort(function(a,b){return a.scadenza<b.scadenza?-1:1;})[0];
     var txt=ch+" di "+mine.length+" impegni";
     pr.appendChild(el("span","num",txt));
@@ -972,7 +1104,7 @@ function disegnaGuida(){
    ["Scritto","Il documento da rileggere e usare: diagnosi, piano a 7/30/90 giorni, le parole esatte da dire. Usa il modello più capace, quindi può metterci fino a un minuto prima di iniziare a scrivere."],
    ["Lo score di avanzamento","È la quota di impegni presi che risultano chiusi. Non dice se il problema è risolto: dice se quello che hai deciso di fare è stato fatto. Due numeri diversi, e confonderli è il modo classico di mentire a sé stessi con una dashboard."],
    ["La riga piatta","Nel grafico settimanale, zero chiusure con casi aperti è il segnale che conta: il follow-up si è fermato. Più informativo di qualunque percentuale."],
-   ["Il diario","Ogni caso archiviato diventa una nota nel vault Bejelith (Lavoro, Gestione gruppi), con stato e impegni; gli eventi finiscono in un log datato. Se cambi lo stato o spunti un impegno nella nota, l'app lo rilegge alla sincronizzazione. Una nota con il tag caso-team può diventare un caso. Le ultime note del diario danno contesto al consulente: si disattiva dal pannello Diario."]]
+   ["Il diario","Ogni caso archiviato diventa una nota nel vault Bejelith (Lavoro, Gestione gruppi), con stato e impegni; gli eventi finiscono in un log datato. Se cambi lo stato o spunti un impegno nella nota, l'app lo rilegge alla sincronizzazione. Una nota con il tag caso-team può diventare un caso. Le ultime note del diario possono dare contesto al consulente: è spento per impostazione predefinita e si accende dal pannello Diario, perché significa mandare a Claude anche quello che hai scritto di personale."]]
    .forEach(function(x){ var b=el("div","box"); b.appendChild(el("b",null,x[0])); b.appendChild(el("p",null,x[1])); du.appendChild(b); });
   pb2.appendChild(du); p2.appendChild(pb2); guida.appendChild(p2);
 
@@ -984,6 +1116,10 @@ function disegnaGuida(){
   var w1=el("div","box warnbox");
   w1.appendChild(el("b",null,"Dove si ferma"));
   w1.appendChild(el("p",null,"Non diagnostica persone e non usa etichette cliniche: solo comportamenti e impatti. Non scrive copioni per far cedere qualcuno. E davanti a molestie, discriminazione, minacce, rischi per la salute, procedimenti disciplinari od obblighi di consultazione sindacale si fermerà indicandoti HR o il legale: non sono conflitti da mediare, sono condotte. Le decisioni sulle persone restano tue."));
+  var w2=el("div","box warnbox"); w2.style.borderLeftColor="var(--signal)";
+  w2.appendChild(el("b",null,"Chi può leggere i casi"));
+  w2.appendChild(el("p",null,"Solo tu e chi ha accesso in modifica a questa pagina. Se la condividi in sola lettura o con un link, chi la apre vede l'interfaccia ma non i casi, gli impegni, il tuo contesto o il diario. La conversazione in corso vive sotto il tuo spazio privato, non visibile a nessun altro. Resta valida la regola di usare iniziali o ruoli: un'app privata oggi può essere condivisa domani."));
+  pb3.appendChild(w2);
   pb3.appendChild(w1);
   p3.appendChild(pb3); guida.appendChild(p3);
 
@@ -1025,7 +1161,7 @@ function setVista(v){
   document.getElementById("vPlancia").setAttribute("aria-pressed",v==="plancia"?"true":"false");
   document.getElementById("tGuida").setAttribute("aria-pressed",v==="guida"?"true":"false");
   flow.hidden=v!=="parla"; plancia.hidden=v!=="plancia"; guida.hidden=v!=="guida"; piede.hidden=v!=="parla";
-  if(v==="plancia") disegnaPlancia();
+  if(v==="plancia"){ animaPlancia=true; disegnaPlancia(); }
   else if(v==="guida") disegnaGuida();
   else if(!turni.length) home();
   var attiva=v==="plancia"?plancia:v==="guida"?guida:flow;
@@ -1036,7 +1172,8 @@ function nuovaConversazione(){
   if(ctl)ctl.abort();
   if(puoLeggere&&window.speechSynthesis.speaking)window.speechSynthesis.cancel();
   try{localStorage.removeItem(KEY);}catch(e){}
-  turni=[]; allegata=null; mostraAllegata(); ripresa=null; setModo("voce"); setVista("parla"); home();
+  turni=[]; allegata=null; mostraAllegata(); ripresa=null; salvaSessioneDb();
+  setModo("voce"); setVista("parla"); home();
 }
 function home(){
   if(turni.length)return;
@@ -1109,7 +1246,14 @@ function rigaImpegno(i){
   x.appendChild(m);
   var d=el("button","x","×"); d.setAttribute("aria-label","Elimina");
   d.onclick=async function(){ if(d.textContent!=="?"){d.textContent="?";return;} d.disabled=true;
-    try{ await db.doc("impegni/"+i.id).delete(); diarioDopoImpegno(i,null); }catch(e){ d.disabled=false; d.textContent="×"; } };
+    var copia={}; for(var k in i)if(k!=="id")copia[k]=i[k];
+    try{
+      await db.doc("impegni/"+i.id).delete(); diarioDopoImpegno(i,null);
+      annulla("Impegno eliminato",async function(){
+        await db.doc("impegni/"+i.id).set(copia);
+        registra("Eliminazione annullata: "+(i.testo||""));
+      });
+    }catch(e){ d.disabled=false; d.textContent="×"; } };
   r.appendChild(t); r.appendChild(x); if(canWrite)r.appendChild(d);
   return r;
 }
@@ -1411,7 +1555,7 @@ async function sheetArchivia(testo,fonte){
         var r=righe[k];
         if(!r.ck.checked||!r.tx.value.trim())continue;
         await db.collection("impegni").add({testo:r.tx.value.trim(),chi:r.who.value.trim(),
-          scadenza:r.dt.value||"",fatto:false,scheda:d.titolo,creato:new Date().toISOString()});
+          scadenza:r.dt.value||"",fatto:false,casoId:ref.id,scheda:d.titolo,creato:new Date().toISOString()});
       }
       s.back.remove(); diarioDopoArchivia(ref.id,d.titolo,fonte); setVista("plancia");
     }catch(e){
@@ -1424,8 +1568,10 @@ async function sheetArchivia(testo,fonte){
 
 /* ===================== diario: vault Bejelith su Drive ===================== */
 /* Casi -> note .md nella cartella Lavoro/Gestione gruppi; modifiche alle note -> di nuovo nell'app.
-   Il connettore Drive non sa riscrivere il contenuto di un file: una nota si aggiorna creando la nuova versione
-   e mettendo la vecchia nel cestino (solo file creati da questa pagina). */
+   Il connettore Drive non sa riscrivere il contenuto di un file (update_file cambia solo i metadati: verificato
+   sullo schema del tool), quindi una nota si aggiorna creando la nuova versione e mettendo la vecchia nel cestino.
+   Conseguenza da sapere: la cronologia delle versioni di Drive si spezza e l'indirizzo della nota cambia. Per
+   limitare il danno teniamo l'impronta del testo e non riscriviamo una nota identica a quella già salvata. */
 var DRV="Google Drive";
 var ID_CASI="1DYhxUXnbTcYalHK3tXWE9ecdN_QLSuuf";    /* Lavoro / Gestione gruppi */
 var ID_DIARIO="1pyJE4O_wVDnpPaO9g9Vojeb3qRzPe2lM";  /* Diario (note giornaliere) */
@@ -1451,7 +1597,8 @@ function dErr(e){
 function oraIt(){ return new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}); }
 function giorno(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function diarioAttivo(){ return !!(mcp&&db&&canWrite); }
-function usaCtx(){ return !(dPref&&dPref.usaContesto===false); }
+/* spento per difetto: il diario personale non parte verso Claude se non lo chiedi tu */
+function usaCtx(){ return !!(dPref&&dPref.usaContesto===true); }
 function pausa(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
 var dTraccia=[];
 function tr(m){ dTraccia.push(oraIt()+" "+m); if(dTraccia.length>40)dTraccia.shift(); }
@@ -1482,7 +1629,7 @@ async function dLista(parentId,extra){
     if(tok)inp.pageToken=tok;
     var r=await dcall("search_files",inp);
     ((r&&r.files)||[]).forEach(function(f){ out.push(f); });
-    tok=r&&r.nextPageToken; n++;
+    tok=r&&(r.nextPageToken||r.next_page_token); n++;
   }while(tok&&n<4);
   return out;
 }
@@ -1498,7 +1645,7 @@ function nomeNota(s){
 function lnk(s){ return "[["+nomeNota(s)+"]]"; }
 function schedaPerTitolo(t){ return schede.filter(function(x){ return x.titolo===t; })[0]; }
 function testoNota(s){
-  var L=[], imps=impDi(s.titolo);
+  var L=[], imps=impDi(s);
   L.push("---","tipo: caso","caso_id: "+s.id,"stato: "+statoDi(s),
     "stadio: "+(s.stadioCodice||""),"sicurezza: "+(s.sicurezzaLivello||""),
     "scarf: ["+((s.scarf||[]).join(", "))+"]",
@@ -1549,12 +1696,16 @@ function testoLog(voci){
 }
 
 /* ---------- app -> diario ---------- */
+function impronta(t){ var h=5381,i=0; for(;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0; return String(h>>>0); }
+function urlFile(f){ return (f&&f.viewUrl)||("https://drive.google.com/file/d/"+((f&&f.id)||"")+"/view"); }
 async function scriviNota(s){
-  var f=await dcall("create_file",{title:nomeNota(s)+".md",parentId:ID_CASI,textContent:testoNota(s),
+  var testo=testoNota(s), imp=impronta(testo);
+  if(s.nota&&s.nota.fileId&&s.nota.impronta===imp){ tr("nota invariata, non riscritta: "+s.nota.fileId); return; }
+  var f=await dcall("create_file",{title:nomeNota(s)+".md",parentId:ID_CASI,textContent:testo,
     contentMimeType:"text/markdown",disableConversionToGoogleType:true});
   if(!f||!f.id)throw {code:"upstream_error"};
   var vecchio=s.nota&&s.nota.fileId;
-  var nuova={fileId:f.id,modificata:f.modifiedTime||new Date().toISOString(),url:f.viewUrl||""};
+  var nuova={fileId:f.id,modificata:f.modifiedTime||new Date().toISOString(),url:urlFile(f),impronta:imp};
   await db.doc("schede/"+s.id).update({nota:nuova});
   s.nota=nuova;
   tr("nota salvata nel database: "+f.id);
@@ -1568,7 +1719,7 @@ async function scriviLog(){
   var f=await dcall("create_file",{title:"Gestione gruppi - Log.md",parentId:ID_CASI,textContent:testoLog(voci),
     contentMimeType:"text/markdown",disableConversionToGoogleType:true});
   if(!f||!f.id)throw {code:"upstream_error"};
-  await ref.set({voci:voci,fileId:f.id,url:f.viewUrl||"",aggiornato:new Date().toISOString()});
+  await ref.set({voci:voci,fileId:f.id,url:urlFile(f),aggiornato:new Date().toISOString()});
   logCoda.splice(0,nuove.length);
   if(cur.fileId&&cur.fileId!==f.id){ try{ await dcall("trash_file",{fileId:cur.fileId}); }catch(e){} }
 }
@@ -1606,7 +1757,7 @@ function diarioDopoStato(s,nuovo){
   pianifica(s.id);
 }
 function diarioDopoImpegno(i,fatto){
-  var s=schedaPerTitolo(i.scheda);
+  var s=casoDi(i);
   registra((fatto===true?"Impegno chiuso":fatto===false?"Impegno riaperto":"Impegno eliminato")+": "+(i.testo||"")+(s?" ("+lnk(s)+")":""));
   if(s)pianifica(s.id);
 }
@@ -1653,7 +1804,7 @@ async function sincronizza(){
           await db.doc("schede/"+s.id).update({stato:st,aggiornata:new Date().toISOString()});
           cm.push("stato "+STATI[st][0].toLowerCase());
         }
-        var imps=impDi(s.titolo);
+        var imps=impDi(s);
         for(var b=0;b<imps.length;b++){
           var i=imps[b], nf=n.chk[i.id];
           if(nf===undefined||nf===!!i.fatto)continue;
@@ -1675,18 +1826,27 @@ async function sincronizza(){
   }finally{ sincInCorso=false; segnaStato(); }
 }
 async function cercaDaImportare(perId){
-  var res=await dcall("search_files",{query:"fullText contains 'caso-team' and mimeType = 'text/markdown' and trashed = false",
-    excludeContentSnippets:true,pageSize:25});
+  /* solo dentro le due cartelle del vault: una ricerca su tutto il Drive pescava file non pertinenti
+     e ne scaricava il contenuto intero */
+  var trovati=[], visti={};
+  for(var p=0;p<2;p++){
+    var cart=p===0?ID_CASI:ID_DIARIO;
+    try{
+      var res=await dcall("search_files",{query:"parentId = '"+cart+"' and fullText contains 'caso-team' and trashed = false",
+        excludeContentSnippets:true,pageSize:25});
+      ((res&&res.files)||[]).forEach(function(f){ if(f&&f.id&&!visti[f.id]){ visti[f.id]=1; trovati.push(f); } });
+    }catch(e){ tr("ricerca in "+cart+" non riuscita: "+((e&&e.code)||"errore")); }
+  }
   var notaIds={}; schede.forEach(function(s){ if(s.nota&&s.nota.fileId)notaIds[s.nota.fileId]=1; });
   var gia=(dPref.trattate||[]);
   var out=[];
-  var cand=((res&&res.files)||[]).filter(function(f){
+  var cand=trovati.filter(function(f){
     return !notaIds[f.id]&&gia.indexOf(f.id)<0&&!/^Caso - /.test(f.title||"")&&!/^Gestione gruppi - Log/.test(f.title||"");
-  }).slice(0,6);
+  }).slice(0,4);
   for(var k=0;k<cand.length;k++){
     var t=await leggiFile(cand[k].id), n=leggiNota(t);
     if(n.fm.caso_id)continue;
-    out.push({id:cand[k].id,title:String(cand[k].title||"").replace(/\.md$/,""),url:cand[k].viewUrl||"",testo:pulisciNota(t)});
+    out.push({id:cand[k].id,title:String(cand[k].title||"").replace(/\.md$/,""),url:urlFile(cand[k]),testo:pulisciNota(t)});
   }
   daImportare=out; aggiornaBadgeD();
 }
@@ -1743,7 +1903,9 @@ function sheetDiario(){
 
   var lb=document.createElement("label"); lb.className="pick"; lb.style.marginTop="12px";
   var ck=document.createElement("input"); ck.type="checkbox"; ck.checked=usaCtx();
-  var tx=el("div","g"); tx.appendChild(el("span",null,"Usa le ultime note del diario come contesto per il consulente"));
+  var tx=el("div","g");
+  tx.appendChild(el("span",null,"Usa le ultime note del diario come contesto per il consulente"));
+  tx.appendChild(el("div","u","Spento per impostazione predefinita. Con questa spunta, le ultime tre note del diario — anche quelle personali — vengono inviate a Claude a ogni messaggio."));
   ck.onchange=async function(){
     dPref=Object.assign({},dPref,{usaContesto:ck.checked});
     if(!ck.checked){ ctxD=""; }
@@ -1828,20 +1990,27 @@ home(); autoAlza();
   if(!db){ if(vista==="plancia")disegnaPlancia(); return; }
   var t1=setTimeout(function(){},10000);
   try{
-    db.collection("schede").orderBy("aggiornata","desc").limit(80).onSnapshot(function(snap){
+    db.collection("schede").orderBy("aggiornata","desc").limit(200).onSnapshot(function(snap){
       clearTimeout(t1); dbPronto=true;
       schede=snap.docs.map(function(d){ var v=Object.assign({},d.data()||{}); v.id=d.id; return v; });
-      if(vista==="plancia")disegnaPlancia();
+      tronco.schede=snap.docs.length>=200;
+      pianificaPlancia();
     },function(){ clearTimeout(t1); dbPronto=true; });
-    db.collection("impegni").limit(400).onSnapshot(function(snap){
+    db.collection("impegni").orderBy("creato","desc").limit(600).onSnapshot(function(snap){
       impegni=snap.docs.map(function(d){ var v=Object.assign({},d.data()||{}); v.id=d.id; return v; });
+      tronco.impegni=snap.docs.length>=600;
       aggiornaBadge();
-      if(vista==="plancia")disegnaPlancia(); else if(!turni.length)home();
+      if(vista==="plancia")pianificaPlancia(); else if(!turni.length)home();
     },function(){});
     db.doc("profilo/mio").onSnapshot(function(snap){
       profilo=snap.exists?(snap.data()||null):null; if(vista==="parla"&&!turni.length)home();
     },function(){});
   }catch(e){ clearTimeout(t1); db=null; }
+  /* la conversazione lasciata a metà su un altro dispositivo */
+  try{
+    var sdb=await leggiSessioneDb();
+    if(sdb&&!turni.length&&(!ripresa||sdb.ts>ripresa.ts)){ ripresa=sdb; if(vista==="parla")home(); }
+  }catch(e){}
   diarioAvvia();
 })();
 </script>
