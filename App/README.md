@@ -99,3 +99,19 @@ contesto), `user` (per sapere chi può scrivere), `downloads` (l'export `.md`).
 
 Modificare questo file e ripubblicarlo con lo stesso URL, altrimenti si crea un Artifact
 separato. Da una conversazione nuova serve passare l'URL come `url`.
+
+## Versione 4 — tasti in alto, guida, know-how
+
+- **Barra dei tasti** sotto la testata, sempre visibile e scorrevole in orizzontale: Aperti
+  (con il contatore), Il tuo contesto, Guida, Nuova. Il menu a tendina è stato eliminato:
+  niente più due tocchi per arrivare a una cosa che si usa ogni volta.
+- **Guida** come terza vista: i cinque passi del flusso, i due registri, come si legge lo
+  score e perché la riga piatta del grafico conta più della percentuale, cosa conviene fare,
+  e dove l'app si ferma.
+- **Know-how** in fondo alla guida: 22 modelli in quattro famiglie, ciascuno con autore e
+  anno, a cosa serve, il contenuto, e l'errore che si fa. In blocchi richiudibili (`details`),
+  così la vista non è un muro.
+
+Il contenuto del know-how è la fonte di [`../Know-how/modelli.md`](../Know-how/modelli.md),
+estratto con `../Know-how/estrai.mjs`: l'app e il documento non possono divergere.
+

@@ -47,6 +47,15 @@ Le skill si richiamano a vicenda dove ha senso: `diagnosi-team` precede
 `facilita-retrospettiva` (il format si scegli sullo stadio del gruppo), e `piano-cambiamento`
 precede `annuncio-organizzativo` (la comunicazione esegue il piano, non lo sostituisce).
 
+## Know-how
+
+[`Know-how/modelli.md`](./Know-how/modelli.md) — 22 modelli con l'autore e l'anno, a cosa
+serve ciascuno, il contenuto in breve e **l'errore che si fa**, incluse le avvertenze dove
+l'evidenza empirica è debole (la curva di Kübler-Ross applicata al cambiamento, il
+questionario di Belbin, la separazione di Herzberg). Riferimento comune ad agent, skill e app;
+generato da `App/gestione-gruppi.html` con `Know-how/estrai.mjs`, così le due copie non
+divergono.
+
 ## Uso da telefono (voce)
 
 Istruzioni in [`Mobile/`](./Mobile). In sintesi: un Progetto su claude.ai con le istruzioni

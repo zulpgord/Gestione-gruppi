@@ -49,6 +49,53 @@ header .wrap{padding-block:9px;display:flex;align-items:center;gap:9px}
 .badge.late{background:var(--critico);color:#fff}
 button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
+/* barra dei tasti, sempre visibile sotto la testata */
+.tools{border-top:1px solid var(--line-soft);background:var(--surface)}
+.tools .wrap{padding-block:7px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.tools .wrap::-webkit-scrollbar{display:none}
+.tools button{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:12px;
+  font-weight:600;padding:6px 11px;border-radius:999px;cursor:pointer;flex:none;white-space:nowrap}
+.tools button:hover{border-color:var(--accent)}
+.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* guida */
+.guida h1{font-family:var(--font-read);font-size:clamp(22px,5.6vw,29px);font-weight:600;letter-spacing:-.02em;line-height:1.15;
+  margin:0 0 7px;text-wrap:balance}
+.guida .occhio{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:9px}
+.guida .lede{font-family:var(--font-read);font-size:16px;line-height:1.55;color:var(--muted);margin:0;max-width:62ch}
+.guida h2{font-family:var(--font-ui);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.guida p{font-family:var(--font-read);font-size:15px;line-height:1.58;margin:0 0 .7em;max-width:64ch}
+.guida p:last-child{margin-bottom:0}
+.passi{counter-reset:p;display:flex;flex-direction:column;gap:13px}
+.passo{display:flex;gap:12px}
+.passo .n{flex:none;width:25px;height:25px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.passo .c{flex:1;min-width:0}
+.passo b{display:block;font-size:14px;font-weight:700;margin-bottom:2px}
+.passo span{font-family:var(--font-read);font-size:14px;line-height:1.5;color:var(--muted)}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px}
+.box{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:var(--bg)}
+.box b{display:block;font-size:12.5px;font-weight:700;margin-bottom:4px}
+.box p{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0}
+.warnbox{border-left:3px solid var(--critico);border-radius:0;background:transparent;border-top:0;border-right:0;border-bottom:0;padding:2px 0 2px 12px}
+.warnbox b{color:var(--fg)}
+.fam{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px}
+.fam:first-of-type{margin-top:0}
+details.mod{border:1px solid var(--line);border-radius:9px;background:var(--bg);margin-bottom:6px}
+details.mod>summary{cursor:pointer;padding:10px 12px;list-style:none;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+details.mod>summary::-webkit-details-marker{display:none}
+details.mod>summary b{font-size:14px;font-weight:700}
+details.mod>summary i{font-style:normal;font-size:11px;color:var(--muted);letter-spacing:.03em}
+details.mod>summary::after{content:"+";margin-left:auto;color:var(--muted);font-weight:700;font-size:15px;line-height:1}
+details.mod[open]>summary::after{content:"\2212"}
+details.mod .inner{padding:0 12px 12px;border-top:1px solid var(--line-soft);margin-top:2px;padding-top:10px}
+details.mod .inner dl{margin:0}
+details.mod .inner dt{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:9px}
+details.mod .inner dt:first-child{margin-top:0}
+details.mod .inner dd{margin:3px 0 0;font-family:var(--font-read);font-size:14px;line-height:1.52}
+details.mod .inner dd.err{font-family:var(--font-ui);font-size:13px;line-height:1.45;border-left:2px solid var(--critico);padding-left:10px}
+
 main{flex:1;overflow-y:auto;overscroll-behavior:contain}
 main .wrap{padding-block:16px 10px;display:flex;flex-direction:column;gap:16px}
 .num{font-variant-numeric:tabular-nums}
@@ -261,13 +308,21 @@ textarea::placeholder{color:var(--muted)}
       <button id="vParla" aria-pressed="true">Parla</button>
       <button id="vPlancia" aria-pressed="false">Plancia</button>
     </div>
-    <button class="ico" id="bMenu" aria-label="Menu">Menu<span class="badge" id="bdg" hidden>0</span></button>
+  </div>
+  <div class="tools">
+    <div class="wrap">
+      <button id="tAperti">Aperti<span class="badge" id="bdg" hidden>0</span></button>
+      <button id="tContesto">Il tuo contesto</button>
+      <button id="tGuida" aria-pressed="false">Guida</button>
+      <button id="tNuova">Nuova</button>
+    </div>
   </div>
 </header>
 
 <main id="main">
   <div class="wrap" id="flow"></div>
   <div class="wrap" id="plancia" hidden></div>
+  <div class="wrap guida" id="guida" hidden></div>
 </main>
 
 <footer id="piede">
@@ -348,7 +403,7 @@ var STATI={aperto:["Aperto","st-aperto"],corso:["In corso","st-corso"],risolto:[
 var turni=[], modo="voce", vista="parla";
 var sample=null, db=null, downloads=null, canWrite=false, dbPronto=false;
 var schede=[], impegni=[], profilo=null, allegata=null, ctl=null, inCorso=false, ripresa=null, tabellaVisibile=false;
-var flow=document.getElementById("flow"), plancia=document.getElementById("plancia");
+var flow=document.getElementById("flow"), plancia=document.getElementById("plancia"), guida=document.getElementById("guida");
 var box=document.getElementById("box"), bSend=document.getElementById("bSend");
 var hint=document.getElementById("hint"), piede=document.getElementById("piede"), KEY="gg:sessione:v2";
 
@@ -661,14 +716,194 @@ function testoScheda(s){
   return r.join("\n");
 }
 
+/* ===================== know-how ===================== */
+var PASSI=[
+ ["Racconta, non scrivere","Tocca il microfono sulla tastiera e di' cosa è successo come lo diresti a un collega di cui ti fidi: l'episodio, chi c'era, cosa ti ha dato fastidio. Non serve ordine."],
+ ["Rispondi alle domande","Arrivano una per volta, al massimo sei. Servono a separare i fatti dalle tue interpretazioni: è il passaggio che decide se il consiglio sarà utile o generico."],
+ ["Chiedi il piano scritto","Quando la situazione è chiara, tocca «Preparami il piano scritto». Passa al registro Scritto e prepara il documento: diagnosi, piano a 7/30/90 giorni, e le parole esatte da dire."],
+ ["Archivia","Estrae il caso — stadio del gruppo, sicurezza psicologica, bisogni sotto pressione — e gli impegni con le date. Correggi quello che ha capito male, poi salva."],
+ ["Chiudi gli impegni","Dalla plancia o dagli Aperti, spunta quelli fatti. È il passaggio che nessuno fa, e l'unico che trasforma un documento in un cambiamento."]
+];
+var FAMIGLIE=[
+ ["Il gruppo",[
+  ["Stadi di sviluppo del gruppo","Bruce Tuckman, 1965 (fase di chiusura aggiunta nel 1977)",
+   "Capire perché un gruppo che prima funzionava ha smesso, e cosa serve da te in questo momento.",
+   "Cinque momenti: si forma (dipendenza dal capo, cortesia di superficie), litiga (conflitto su priorità e metodo, sottogruppi), si dà le regole (norme condivise, fiducia iniziale), produce (autonomia alta, conflitto sul merito e non sulle persone), si chiude (disimpegno, lutto). Il tuo ruolo cambia a ogni momento: direttivo, poi facilitatore, poi allenatore, poi delegante.",
+   "Credere che si vada avanti e basta. Un ingresso, un nuovo capo, un obiettivo cambiato o un taglio riportano il gruppo a litigare. E un gruppo a cui è stato impedito di litigare non arriva mai alle regole: il conflitto rimandato torna, più tardi e peggio."],
+  ["Sicurezza psicologica","Amy Edmondson, Harvard, 1999",
+   "Capire se qualunque altro intervento ha senso. È il fattore con l'evidenza più solida di tutto l'elenco.",
+   "È la convinzione condivisa che si possa dire una cosa scomoda, ammettere un errore o fare una domanda ingenua senza pagarne il prezzo. Si misura dai comportamenti: si ammettono gli errori? il dissenso arriva in riunione o nel corridoio? cosa succede davvero a chi sbaglia?",
+   "Confonderla con il clima gentile. Un gruppo dove tutti sono d'accordo in fretta non è sicuro: è silenzioso. E dove la sicurezza è bassa, il team building produce teatro — si interviene lì, prima di tutto il resto."],
+  ["Le cinque disfunzioni","Patrick Lencioni, 2002",
+   "Trovare il livello su cui intervenire, invece di lavorare su quello sbagliato.",
+   "Una catena: assenza di fiducia porta a paura del conflitto, che porta a mancanza di impegno, che porta a elusione delle responsabilità, che porta a disattenzione ai risultati. Si identifica l'anello più basso rotto.",
+   "Lavorare sui risultati quando è rotta la fiducia. È il modo più comune di perdere sei mesi."],
+  ["Le condizioni abilitanti","Richard Hackman, 2002",
+   "Capire quanto del risultato dipende da come hai disegnato la squadra, e quanto da come la guidi giorno per giorno.",
+   "Una squadra rende se ha: confini chiari su chi è dentro, un compito che richiede davvero di lavorare insieme, autorità reale sulle proprie decisioni, obiettivi stabili, e un contesto che la supporta. Hackman sosteneva che il disegno pesa molto più degli interventi successivi.",
+   "Provare a risolvere con riunioni e motivazione quello che è un problema di disegno: confini confusi, nessuna autorità, obiettivi che cambiano ogni mese."],
+  ["Gruppo di lavoro o squadra","Jon Katzenbach e Douglas Smith, 1993",
+   "Smettere di chiamare squadra ciò che non lo è, e di pretenderne i comportamenti.",
+   "Un gruppo di lavoro somma contributi individuali con un capo che coordina. Una squadra ha un prodotto collettivo, responsabilità condivisa e competenze complementari. Sono due cose legittime e diverse.",
+   "Chiedere responsabilità condivisa a persone che hanno obiettivi e premi individuali. Se il sistema premia il singolo, la squadra è una parola."],
+  ["Ruoli di squadra","Raymond Meredith Belbin, 1981",
+   "Accorgersi di cosa manca in un gruppo: chi chiude, chi mette in discussione, chi tiene i rapporti.",
+   "Nove ruoli ricorrenti — tra cui l'ideatore, il realizzatore, il perfezionista, il coordinatore, lo stimolatore, il diplomatico. Utile come vocabolario per notare i buchi funzionali.",
+   "Usarlo per etichettare le persone. Il questionario di Belbin ha un sostegno empirico debole, come gran parte degli strumenti di profilazione di questo tipo. Vale come lente sui buchi del gruppo, non come classificazione di chi hai davanti."]]],
+ ["Il cambiamento",[
+  ["Scongelare, cambiare, ricongelare","Kurt Lewin, 1947 — il fondatore del campo",
+   "Ricordare le due metà che tutti dimenticano: prima e dopo.",
+   "Senza uno scongelamento — un motivo credibile per cui il vecchio modo non va più — non c'è cambiamento, solo un annuncio. Senza un ricongelamento — ruoli, metriche, premi, rituali nuovi — il sistema torna indietro in tre o sei mesi. Lewin ha dato anche l'analisi delle forze: elencare quelle che spingono e quelle che frenano, e notare che togliere un freno è quasi sempre più efficace che aggiungere una spinta.",
+   "Spingere di più. Se le persone resistono, il margine sta nel rimuovere l'ostacolo — una metrica che premia ancora il vecchio comportamento, un capo intermedio non allineato — non nell'insistere."],
+  ["Gli otto passi","John Kotter, Harvard, 1995 (il saggio) e 1996 (il libro)",
+   "Dare struttura a un cambiamento ampio, imposto dall'alto, su più squadre.",
+   "Uno: un senso di urgenza vero, basato su dati. Due: una coalizione guida con potere, credibilità e competenza — non solo gerarchia. Tre: una visione dicibile in trenta secondi. Quattro: comunicarla molto più di quanto sembri necessario. Cinque: rimuovere gli ostacoli, processi e incentivi inclusi. Sei: risultati visibili a 30-90 giorni. Sette: consolidare senza dichiarare vittoria troppo presto. Otto: ancorare nei ruoli, nei premi, nelle assunzioni.",
+   "Fabbricare l'urgenza. Funziona una volta, poi la tua credibilità è spesa e non torna. L'altro errore è il passo cinque: se la metrica premia ancora il vecchio comportamento, i passi precedenti non contano."],
+  ["ADKAR","Jeff Hiatt, Prosci, 2003",
+   "Capire perché un cambiamento già partito non viene adottato. È una diagnostica, non un piano.",
+   "Cinque anelli in sequenza, sulla singola persona: consapevolezza del perché, desiderio di partecipare, conoscenza di come si fa, capacità di farlo davvero, rinforzo perché non si torni indietro. Si individua quale anello è rotto, gruppo per gruppo.",
+   "Rispondere a un problema di desiderio con più formazione. Produce corsi pieni e comportamenti identici — ed è l'errore più costoso e più frequente del change management."],
+  ["Transizioni","William Bridges, 1991",
+   "Distinguere il cambiamento dalla transizione: il primo è una data sull'organigramma, la seconda è il processo psicologico delle persone.",
+   "Tre fasi: una fine, con la perdita di qualcosa; una zona di mezzo, dove la produttività cala e i rumor si moltiplicano; un inizio nuovo. La zona di mezzo va presidiata — rituali temporanei, un canale per le domande, aspettative riviste e dette ad alta voce — non negata.",
+   "Non dare un nome alla perdita. Dire «è solo un cambio organizzativo» a chi perde il suo team, la sua visibilità o il suo mestiere garantisce resistenza, e te la fa leggere come irrazionale."],
+  ["La curva delle fasi emotive","Elisabeth Kübler-Ross, 1969 — con un'avvertenza",
+   "Riconoscere che negazione e rabbia davanti a un cambiamento non sono sabotaggio.",
+   "Negazione, rabbia, negoziazione, depressione, accettazione. Nata osservando malati terminali, è stata poi prestata al cambiamento organizzativo.",
+   "Prenderla come una scaletta che tutti percorrono in ordine. Anche nel campo originale le fasi fisse non hanno retto alla verifica empirica, e l'applicazione a una riorganizzazione aziendale è un'analogia, non un modello validato. Usala per avere pazienza, non per prevedere."]]],
+ ["La persona e la conversazione",[
+  ["SCARF","David Rock, 2008",
+   "Capire in anticipo perché una conversazione o un annuncio produrrà difesa invece di ascolto.",
+   "Cinque bisogni sociali che il cervello tratta come questioni di sopravvivenza: status (il mio valore relativo), certezza (so cosa succede), autonomia (ho voce in capitolo), appartenenza (sono dei nostri), equità (la regola vale per tutti). Quando uno è minacciato, le risorse cognitive vanno alla difesa. Prima di una conversazione difficile si valuta quali sono sotto pressione e si mitigano: dove parli, cosa anticipi nell'invito, cosa lasci scegliere, quale criterio mostri.",
+   "Trattarlo come psicologia da salotto e saltare la mitigazione. Il valore di SCARF non è la diagnosi, è la riga di script che cambia di conseguenza."],
+  ["Leadership situazionale","Paul Hersey e Ken Blanchard, 1969",
+   "Calibrare quanto dirigere e quanto delegare, persona per persona e compito per compito.",
+   "Quattro registri secondo competenza e motivazione sul compito attuale: direttivo con chi è nuovo, allenante con chi è disilluso, di sostegno con chi è competente ma incerto, delegante con chi è autonomo.",
+   "Calibrare sulla persona invece che sul compito. Un tecnico con vent'anni di esperienza è a bassa autonomia su un compito che non ha mai fatto, e trattarlo da autonomo lo lascia solo."],
+  ["I cinque stili davanti al conflitto","Kenneth Thomas e Ralph Kilmann, 1974",
+   "Scegliere consapevolmente come stare in un conflitto, invece di usare sempre lo stesso stile.",
+   "Competere, collaborare, compromettere, evitare, accomodare — lungo due assi: quanto tengo al mio obiettivo, quanto alla relazione. Nessuno è giusto in assoluto: collaborare costa tempo e non si usa per tutto; evitare è legittimo se è una scelta dichiarata e non una fuga.",
+   "Mediare ciò che va deciso. Se una delle due parti ha ragione nel merito, cercare un punto d'incontro comunica che non esiste un criterio — e il conflitto torna."],
+  ["Conversazioni decisive","Kerry Patterson, Joseph Grenny, Ron McMillan, Al Switzler, 2002",
+   "Tenere una conversazione ad alto rischio dove le versioni divergono e le emozioni sono forti.",
+   "Si parte dai fatti osservabili, si dichiara la propria interpretazione come interpretazione, si chiede la versione dell'altro, e si lavora per mantenere la sicurezza quando salta — perché quando qualcuno si chiude o attacca, il tema non è più il merito.",
+   "Partire dalla conclusione invece che dai fatti. «Non ti impegni» è una storia; «negli ultimi tre stand-up sei arrivato quindici minuti dopo» è un fatto, e solo il secondo si può discutere."],
+  ["Sincerità radicale","Kim Scott, 2017",
+   "Capire in che modo sbagli tu quando dai feedback.",
+   "Due assi: quanto ti importa della persona e quanto la sfidi direttamente. Chi ha a cuore ma non sfida cade nell'empatia rovinosa — gentile e inutile, il più diffuso fra i capi italiani. Chi sfida senza averne a cuore è aggressione antipatica. Chi non fa né l'uno né l'altro è insincerità manipolatoria.",
+   "Usare «sincerità radicale» come licenza di essere brutali. L'asse dell'averne a cuore non è opzionale: senza, è solo la casella dell'aggressione."],
+  ["GROW","Graham Alexander, Alan Fine e John Whitmore, anni ottanta",
+   "Far risolvere un problema alla persona invece di risolverglielo, quando la competenza c'è.",
+   "Quattro passaggi di domande: obiettivo, realtà attuale, opzioni possibili, cosa farà davvero e entro quando.",
+   "Usarlo come interrogatorio socratico quando la persona semplicemente non sa come si fa. Lì serve insegnare, non allenare."]]],
+ ["L'organizzazione",[
+  ["I tre livelli della cultura","Edgar Schein, MIT, 1985",
+   "Capire perché un cambiamento culturale annunciato non attecchisce.",
+   "Gli artefatti si vedono — slogan, arredi, rituali. I valori dichiarati si leggono sui muri. Gli assunti di base, inconsci e dati per scontati, sono quelli che governano davvero i comportamenti. Si cambia solo intervenendo sul terzo livello, e il terzo livello si muove quando cambiano le conseguenze reali.",
+   "Confondere il secondo livello con il terzo. Il poster dei valori in mensa non è la cultura: la cultura è cosa succede a chi li viola e viene promosso comunque."],
+  ["Apprendimento a doppio anello e routine difensive","Chris Argyris, 1977 e 1990",
+   "Capire perché un'organizzazione intelligente ripete lo stesso errore.",
+   "Anello singolo: correggo il comportamento tenendo fermi i presupposti. Doppio anello: metto in discussione i presupposti stessi. Le routine difensive sono i modi socialmente accettati di non parlare di ciò che conta — e la più potente è che non si può parlare del fatto che non si può parlarne.",
+   "Chiedere feedback sinceri in un sistema in cui dirli è costato caro a qualcuno. Le persone fanno la cosa razionale: tacciono, e tu concludi che va tutto bene."],
+  ["Autodeterminazione","Edward Deci e Richard Ryan, 1985",
+   "Capire da dove viene la motivazione che dura, invece di comprarla.",
+   "Tre bisogni: autonomia, competenza, relazione. Quando sono soddisfatti la motivazione è interna e regge; i premi esterni su attività già interessanti possono spegnerla. È fra le teorie motivazionali con più evidenza accumulata.",
+   "Rispondere a un problema di autonomia o di senso con un incentivo economico. Funziona per compiti ripetitivi, non per lavoro che richiede giudizio."],
+  ["Fattori igienici e motivanti","Frederick Herzberg, 1959",
+   "Smettere di aspettarsi motivazione da ciò che può solo togliere insoddisfazione.",
+   "Stipendio, condizioni, rapporti e politiche aziendali sono igienici: se mancano fanno danno, se ci sono non motivano. Riconoscimento, responsabilità, contenuto del lavoro e crescita sono i motivanti.",
+   "La ricerca originale ha limiti metodologici noti e la separazione netta fra le due categorie non ha tenuto. Resta utile l'intuizione: sistemare lo spogliatoio toglie rabbia, non produce impegno."],
+  ["Gli stili di leadership","Daniel Goleman, 2000",
+   "Avere più di un registro, e sapere quando il tuo preferito è quello sbagliato.",
+   "Sei stili: visionario, allenatore, affiliativo, democratico, battistrada, autoritario. I primi quattro migliorano il clima quasi sempre; gli ultimi due funzionano solo in situazioni precise — una crisi, o una squadra già competente e motivata — e usati come stile abituale lo distruggono.",
+   "Avere un solo stile e chiamarlo carattere."]]]
+];
+
+function disegnaGuida(){
+  if(guida.dataset.pronta)return;
+  guida.innerHTML="";
+  var t=el("div");
+  t.appendChild(el("div","occhio","Guida"));
+  t.appendChild(el("h1",null,"Come si usa, e su cosa si basa."));
+  t.appendChild(el("p","lede","Questa app non ti dà consigli al volo: ti fa le domande che servono, poi scrive il piano e tiene il conto degli impegni. Sotto trovi anche i modelli che usa, chi li ha fatti, e dove ciascuno sbaglia."));
+  guida.appendChild(t);
+
+  var p1=el("div","panel"); var ph1=el("div","ph"); ph1.appendChild(el("h2",null,"Cinque passi"));
+  p1.appendChild(ph1);
+  var pb1=el("div","pb"); var ps=el("div","passi");
+  PASSI.forEach(function(x,k){
+    var r=el("div","passo"); r.appendChild(el("div","n",String(k+1)));
+    var c=el("div","c"); c.appendChild(el("b",null,x[0])); c.appendChild(el("span",null,x[1]));
+    r.appendChild(c); ps.appendChild(r);
+  });
+  pb1.appendChild(ps); p1.appendChild(pb1); guida.appendChild(p1);
+
+  var p2=el("div","panel"); var ph2=el("div","ph"); ph2.appendChild(el("h2",null,"I due registri, e la plancia"));
+  p2.appendChild(ph2);
+  var pb2=el("div","pb"); var du=el("div","duo");
+  [["A voce","Turni di due a cinque frasi, una domanda per volta, nessuna tabella. Serve nella fase in cui stai ancora capendo: in macchina, uscendo da una riunione. Tocca «Ascolta» sotto una risposta per farla leggere."],
+   ["Scritto","Il documento da rileggere e usare: diagnosi, piano a 7/30/90 giorni, le parole esatte da dire. Usa il modello più capace, quindi può metterci fino a un minuto prima di iniziare a scrivere."],
+   ["Lo score di avanzamento","È la quota di impegni presi che risultano chiusi. Non dice se il problema è risolto: dice se quello che hai deciso di fare è stato fatto. Due numeri diversi, e confonderli è il modo classico di mentire a sé stessi con una dashboard."],
+   ["La riga piatta","Nel grafico settimanale, zero chiusure con casi aperti è il segnale che conta: il follow-up si è fermato. Più informativo di qualunque percentuale."]]
+   .forEach(function(x){ var b=el("div","box"); b.appendChild(el("b",null,x[0])); b.appendChild(el("p",null,x[1])); du.appendChild(b); });
+  pb2.appendChild(du); p2.appendChild(pb2); guida.appendChild(p2);
+
+  var p3=el("div","panel"); var ph3=el("div","ph"); ph3.appendChild(el("h2",null,"Cosa conviene fare, e cosa no"));
+  p3.appendChild(ph3);
+  var pb3=el("div","pb");
+  pb3.appendChild(el("p",null,"Compila «Il tuo contesto» una volta: settore, reparto, tuo ruolo, rapporto con HR, vincoli. Viene allegato a ogni conversazione e risparmia due o tre giri di domande a ogni sessione."));
+  pb3.appendChild(el("p",null,"Usa iniziali o solo il ruolo al posto dei nomi. Quando riapri un caso dopo settimane, allegalo dalla plancia: lo stadio di un gruppo ha senso solo in serie storica, e senza il precedente si riparte da zero."));
+  var w1=el("div","box warnbox");
+  w1.appendChild(el("b",null,"Dove si ferma"));
+  w1.appendChild(el("p",null,"Non diagnostica persone e non usa etichette cliniche: solo comportamenti e impatti. Non scrive copioni per far cedere qualcuno. E davanti a molestie, discriminazione, minacce, rischi per la salute, procedimenti disciplinari od obblighi di consultazione sindacale si fermerà indicandoti HR o il legale: non sono conflitti da mediare, sono condotte. Le decisioni sulle persone restano tue."));
+  pb3.appendChild(w1);
+  p3.appendChild(pb3); guida.appendChild(p3);
+
+  var p4=el("div","panel"); var ph4=el("div","ph");
+  ph4.appendChild(el("h2",null,"Know-how: i modelli e chi li ha fatti"));
+  ph4.appendChild(el("p",null,"Sono lenti, non leggi. Servono quando spiegano qualcosa che altrimenti resta oscuro; dove l'evidenza è debole, sotto c'è scritto."));
+  p4.appendChild(ph4);
+  var pb4=el("div","pb");
+  FAMIGLIE.forEach(function(f){
+    pb4.appendChild(el("div","fam",f[0]));
+    f[1].forEach(function(m){
+      var d=document.createElement("details"); d.className="mod";
+      var sm=document.createElement("summary");
+      sm.appendChild(el("b",null,m[0])); sm.appendChild(el("i",null,m[1]));
+      d.appendChild(sm);
+      var inn=el("div","inner"); var dl=document.createElement("dl");
+      dl.appendChild(el("dt",null,"A cosa serve")); dl.appendChild(el("dd",null,m[2]));
+      dl.appendChild(el("dt",null,"In breve")); dl.appendChild(el("dd",null,m[3]));
+      dl.appendChild(el("dt",null,"L'errore che si fa")); dl.appendChild(el("dd","err",m[4]));
+      inn.appendChild(dl); d.appendChild(inn); pb4.appendChild(d);
+    });
+  });
+  p4.appendChild(pb4); guida.appendChild(p4);
+
+  var fine=el("div","row"); fine.style.marginBottom="8px";
+  var b1=el("button",null,"Torna a parlare"); b1.onclick=function(){ setVista("parla"); };
+  var b2=el("button",null,"Vai alla plancia"); b2.onclick=function(){ setVista("plancia"); };
+  fine.appendChild(b1); fine.appendChild(b2); guida.appendChild(fine);
+  guida.dataset.pronta="1";
+}
+
 /* ===================== viste ===================== */
 function setVista(v){
   vista=v;
   document.getElementById("vParla").setAttribute("aria-pressed",v==="parla"?"true":"false");
   document.getElementById("vPlancia").setAttribute("aria-pressed",v==="plancia"?"true":"false");
-  flow.hidden=v!=="parla"; plancia.hidden=v!=="plancia"; piede.hidden=v!=="parla";
-  if(v==="plancia") disegnaPlancia(); else if(!turni.length) home();
+  document.getElementById("tGuida").setAttribute("aria-pressed",v==="guida"?"true":"false");
+  flow.hidden=v!=="parla"; plancia.hidden=v!=="plancia"; guida.hidden=v!=="guida"; piede.hidden=v!=="parla";
+  if(v==="plancia") disegnaPlancia();
+  else if(v==="guida") disegnaGuida();
+  else if(!turni.length) home();
   document.getElementById("main").scrollTop=0;
+}
+function nuovaConversazione(){
+  if(ctl)ctl.abort();
+  if(puoLeggere&&window.speechSynthesis.speaking)window.speechSynthesis.cancel();
+  try{localStorage.removeItem(KEY);}catch(e){}
+  turni=[]; allegata=null; mostraAllegata(); ripresa=null; setModo("voce"); setVista("parla"); home();
 }
 function home(){
   if(turni.length)return;
@@ -712,7 +947,12 @@ function home(){
   i.appendChild(ch);
   var n2=el("div","note"); n2.style.marginTop="18px"; var p2=el("p");
   p2.appendChild(document.createTextNode("Usa ")); p2.appendChild(el("strong",null,"iniziali o il ruolo"));
-  p2.appendChild(document.createTextNode(" al posto dei nomi."));
+  p2.appendChild(document.createTextNode(" al posto dei nomi. "));
+  var lg=el("button",null,"Leggi la guida");
+  lg.style.cssText="appearance:none;border:0;background:transparent;color:var(--accent);font:inherit;font-size:13.5px;font-weight:700;padding:0;cursor:pointer;text-decoration:underline";
+  lg.onclick=function(){ setVista("guida"); };
+  p2.appendChild(lg);
+  p2.appendChild(document.createTextNode(" per i cinque passi e i modelli che usa."));
   if(!profilo||!PROF.some(function(f){return (profilo||{})[f[0]];})){
     p2.appendChild(document.createTextNode(" "));
     var lk=el("button",null,"Compila il tuo contesto");
@@ -889,22 +1129,6 @@ function mostraAllegata(){
   if(allegata){ document.getElementById("attachedLbl").textContent="Caso allegato: "+allegata.titolo; w.hidden=false; }
   else w.hidden=true;
 }
-function sheetMenu(){
-  var s=sheet("Gestione gruppi"), m=el("div","menu");
-  function voce(t,d,fn){ var b=el("button"); b.appendChild(document.createTextNode(t));
-    if(d)b.appendChild(el("small",null,d)); b.onclick=function(){ s.back.remove(); fn(); }; m.appendChild(b); }
-  var n=apertiImp().length;
-  voce("Plancia","Casi segnati, risolti, avanzamento",function(){setVista("plancia");});
-  voce("Impegni aperti"+(n?"  ("+n+")":""), n?"Cosa hai detto che avresti fatto":"Nessuno aperto", sheetImpegni);
-  voce("Il tuo contesto","Settore, reparto, ruolo, vincoli: non li ridichiari ogni volta", sheetProfilo);
-  voce("Nuova conversazione","Chiude questa e riparte da zero",function(){
-    if(ctl)ctl.abort();
-    if(puoLeggere&&window.speechSynthesis.speaking)window.speechSynthesis.cancel();
-    try{localStorage.removeItem(KEY);}catch(e){}
-    turni=[]; allegata=null; mostraAllegata(); ripresa=null; setModo("voce"); setVista("parla"); home();
-  });
-  s.p.appendChild(m); s.fine();
-}
 function sheetImpegni(){
   var ap=apertiImp(), fatti=impegni.filter(function(i){return i.fatto;}).slice(0,12);
   var s=sheet("Impegni","Un piano senza follow-up è un documento. Qui resta cosa hai detto che avresti fatto, e quando.");
@@ -1066,7 +1290,10 @@ document.getElementById("mVoce").onclick=function(){setModo("voce");};
 document.getElementById("mScritto").onclick=function(){setModo("scritto");};
 document.getElementById("vParla").onclick=function(){setVista("parla");};
 document.getElementById("vPlancia").onclick=function(){setVista("plancia");};
-document.getElementById("bMenu").onclick=sheetMenu;
+document.getElementById("tAperti").onclick=sheetImpegni;
+document.getElementById("tContesto").onclick=sheetProfilo;
+document.getElementById("tGuida").onclick=function(){ setVista(vista==="guida"?"parla":"guida"); };
+document.getElementById("tNuova").onclick=nuovaConversazione;
 document.getElementById("attachedX").onclick=function(){ allegata=null; mostraAllegata(); };
 bSend.onclick=function(){invia();};
 box.addEventListener("input",autoAlza);
