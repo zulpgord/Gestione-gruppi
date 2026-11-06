@@ -115,3 +115,39 @@ separato. Da una conversazione nuova serve passare l'URL come `url`.
 Il contenuto del know-how è la fonte di [`../Know-how/modelli.md`](../Know-how/modelli.md),
 estratto con `../Know-how/estrai.mjs`: l'app e il documento non possono divergere.
 
+## Versione 5-12 — il Diario, e la profondità
+
+Fra la v4 e questa, un'altra sessione ha aggiunto il **Diario**: i casi diventano note `.md`
+nel vault Bejelith su Drive (`Lavoro / Gestione gruppi`), le modifiche fatte nelle note — stato
+del caso, spunte sugli impegni — rientrano nell'app alla sincronizzazione, una nota con il tag
+`caso-team` può diventare un caso, e le ultime note del diario possono dare contesto al
+consulente (disattivabile dal pannello Diario). Usa la capability `mcp` con il connettore
+Google Drive. **Quella parte non è stata verificata in questa sessione**: nessuna chiamata
+reale a Drive è stata osservata qui, quindi i nomi degli argomenti e la forma delle risposte
+restano da confermare sull'uso.
+
+Sopra quella base è stata fusa la pass grafica, senza toccare una riga del Diario:
+
+- **Elevazione a token** — `--e1`, `--e2`, `--e3` sono ombre a più strati (non una sfocatura
+  sola), con `--ring` come filo di luce sul bordo alto e `--sunk` per le piste incassate. In
+  tema scuro le ombre non si leggono, quindi sono ridefinite più nere e il filo di luce
+  diventa un velo chiaro all'1-5%: è una palette scelta, non un'inversione.
+- **3D dove informa** — le tessere KPI e le card dei casi si inclinano di 2-5 gradi seguendo
+  il mouse, con `perspective` sul contenitore. Solo con puntatore fine: al tocco non si
+  attiva, perché un dito non ha un "dove sta" continuo e l'effetto diventerebbe un tremolio.
+- **Movimento che riporta un dato** — le barre del grafico crescono dalla linea di base in
+  sequenza, le piste si riempiono dallo zero, i numeri contano fino al valore. Chi guarda vede
+  da dove viene la misura, non solo quanto vale.
+- **Risposta al tocco** — pressione dei tasti con affondamento e ombra che cala, pastiglie che
+  si alzano al passaggio, pannelli a comparsa che salgono con sfondo sfocato, testata che si
+  stacca con un'ombra quando il contenuto le scorre sotto.
+
+Tutto passa da `@media (prefers-reduced-motion: reduce)`, e `conta()`, `riempi()` e `inclina()`
+controllano la preferenza anche in JavaScript: con il movimento ridotto i numeri compaiono già
+finiti e l'inclinazione non si registra affatto.
+
+`fondi-esempio.mjs` è lo script usato per fondere quella pass sulla versione pubblicata da
+un'altra sessione: applica sostituzioni esatte e si rifiuta di scrivere se una non corrisponde
+una volta sola. Resta qui come esempio del modo meno rischioso di modificare questo file a
+quattro mani.
+

@@ -25,6 +25,40 @@
   --viz:#3987e5; --track:#2e3238;
   color-scheme:dark;
 }
+/* profondità: ombre a strati, un filo di luce sul bordo alto, incassatura per le piste */
+:root{
+  --e1:0 1px 1px rgba(28,25,20,.05), 0 2px 4px rgba(28,25,20,.045);
+  --e2:0 1px 1px rgba(28,25,20,.05), 0 3px 7px rgba(28,25,20,.055), 0 9px 20px rgba(28,25,20,.05);
+  --e3:0 2px 4px rgba(28,25,20,.07), 0 12px 26px rgba(28,25,20,.09), 0 28px 56px rgba(28,25,20,.09);
+  --ring:inset 0 1px 0 rgba(255,255,255,.75);
+  --sunk:inset 0 1px 2px rgba(28,25,20,.14), inset 0 -1px 0 rgba(255,255,255,.5);
+  --lift:0 1px 2px rgba(28,25,20,.14);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --e1:0 1px 2px rgba(0,0,0,.42);
+  --e2:0 2px 4px rgba(0,0,0,.45), 0 7px 16px rgba(0,0,0,.42);
+  --e3:0 4px 10px rgba(0,0,0,.5), 0 20px 44px rgba(0,0,0,.52);
+  --ring:inset 0 1px 0 rgba(255,255,255,.055);
+  --sunk:inset 0 1px 3px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.03);
+  --lift:0 1px 3px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --e1:0 1px 2px rgba(0,0,0,.42);
+  --e2:0 2px 4px rgba(0,0,0,.45), 0 7px 16px rgba(0,0,0,.42);
+  --e3:0 4px 10px rgba(0,0,0,.5), 0 20px 44px rgba(0,0,0,.52);
+  --ring:inset 0 1px 0 rgba(255,255,255,.055);
+  --sunk:inset 0 1px 3px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.03);
+  --lift:0 1px 3px rgba(0,0,0,.5);
+}
+
+@keyframes sali{from{opacity:0;transform:translate3d(0,9px,0)}to{opacity:1;transform:none}}
+@keyframes entra{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:none}}
+@keyframes suscard{from{opacity:0;transform:translate3d(0,22px,0)}to{opacity:1;transform:none}}
+@keyframes cresci{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes respira{0%,100%{opacity:.45}50%{opacity:1}}
+.sali{animation:sali .34s cubic-bezier(.22,.7,.26,1) both;animation-delay:calc(var(--i,0)*42ms)}
+.vista-entra{animation:entra .24s cubic-bezier(.22,.7,.26,1) both}
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);display:flex;flex-direction:column;overflow:hidden}
@@ -32,7 +66,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .wrap{width:100%;max-width:820px;margin:0 auto;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);
+  flex:none;transition:box-shadow .2s ease}
+header.staccata{box-shadow:var(--e2)}
 header .wrap{padding-block:9px;display:flex;align-items:center;gap:9px}
 .mark{font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
 .mark span{display:block;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:1px}
@@ -54,9 +90,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 .tools .wrap{padding-block:7px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .tools .wrap::-webkit-scrollbar{display:none}
 .tools button{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:12px;
-  font-weight:600;padding:6px 11px;border-radius:999px;cursor:pointer;flex:none;white-space:nowrap}
-.tools button:hover{border-color:var(--accent)}
-.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  font-weight:600;padding:6px 11px;border-radius:999px;cursor:pointer;flex:none;white-space:nowrap;
+  box-shadow:var(--e1),var(--ring);transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease}
+.tools button:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--e2),var(--ring)}
+.tools button:active{transform:translateY(1px) scale(.98);box-shadow:var(--sunk)}
+.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
+  box-shadow:var(--e2), inset 0 1px 0 rgba(255,255,255,.22)}
 
 /* guida */
 .guida h1{font-family:var(--font-read);font-size:clamp(22px,5.6vw,29px);font-weight:600;letter-spacing:-.02em;line-height:1.15;
@@ -82,7 +121,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 .warnbox b{color:var(--fg)}
 .fam{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px}
 .fam:first-of-type{margin-top:0}
-details.mod{border:1px solid var(--line);border-radius:9px;background:var(--bg);margin-bottom:6px}
+details.mod{border:1px solid var(--line);border-radius:10px;background:var(--bg);margin-bottom:6px;
+  box-shadow:var(--e1),var(--ring);transition:box-shadow .18s ease}
+details.mod:hover,details.mod[open]{box-shadow:var(--e2),var(--ring)}
+details.mod[open] .inner{animation:entra .22s ease both}
+details.mod>summary::after{transition:transform .2s ease}
+details.mod[open]>summary::after{transform:rotate(180deg)}
 details.mod>summary{cursor:pointer;padding:10px 12px;list-style:none;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 details.mod>summary::-webkit-details-marker{display:none}
 details.mod>summary b{font-size:14px;font-weight:700}
@@ -110,27 +154,42 @@ main .wrap{padding-block:16px 10px;display:flex;flex-direction:column;gap:16px}
 .st-scaduto .dot{background:var(--critico)} .st-scaduto{border-color:var(--critico)}
 
 /* ---------- plancia ---------- */
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
-.tile{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:11px 12px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:9px;perspective:900px}
+.tile{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:11px 12px;
+  box-shadow:var(--e1),var(--ring);transform-style:preserve-3d;
+  transition:box-shadow .2s ease, transform .2s cubic-bezier(.22,.7,.26,1)}
+.tile.sollevata{box-shadow:var(--e3),var(--ring)}
 .tile .k{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .tile .v{font-size:27px;font-weight:700;line-height:1;letter-spacing:-.02em}
 .tile .u{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.3}
 
-.panel{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.panel{border:1px solid var(--line);border-radius:11px;background:var(--surface);overflow:hidden;
+  box-shadow:var(--e2),var(--ring)}
 .panel>.ph{padding:11px 13px 9px;border-bottom:1px solid var(--line-soft)}
 .panel>.ph h2{font-family:var(--font-read);font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
 .panel>.ph p{font-size:11.5px;color:var(--muted);margin:3px 0 0;line-height:1.4}
 .panel>.pb{padding:13px}
 
-.score{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.score .big{font-size:46px;font-weight:700;line-height:.92;letter-spacing:-.03em;font-family:var(--font-ui)}
-.score .big i{font-style:normal;font-size:20px;font-weight:600;color:var(--muted);margin-left:2px}
+.score{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;position:relative;isolation:isolate}
+.score::before{content:"";position:absolute;z-index:-1;left:-14px;top:-18px;width:190px;height:150px;pointer-events:none;
+  background:radial-gradient(60% 55% at 32% 42%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 72%)}
+.score .big{font-size:46px;font-weight:700;line-height:.92;letter-spacing:-.03em;font-family:var(--font-ui);
+  text-shadow:0 1px 0 rgba(255,255,255,.5), 0 2px 7px rgba(28,25,20,.14)}
+:root[data-theme="dark"] .score .big{text-shadow:0 1px 0 rgba(255,255,255,.07), 0 3px 12px rgba(0,0,0,.6)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .score .big{
+  text-shadow:0 1px 0 rgba(255,255,255,.07), 0 3px 12px rgba(0,0,0,.6)}}
+.score .big i{font-style:normal;font-size:20px;font-weight:600;color:var(--muted);margin-left:2px;text-shadow:none}
 .score .leg{font-size:12px;color:var(--muted);line-height:1.45;flex:1;min-width:150px}
-.meter{height:8px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:11px}
-.meter i{display:block;height:100%;background:var(--viz);border-radius:4px}
+.meter{height:9px;border-radius:5px;background:var(--track);overflow:hidden;margin-top:11px;box-shadow:var(--sunk)}
+.meter i{display:block;height:100%;border-radius:5px;width:0;
+  background:linear-gradient(180deg, color-mix(in oklab, var(--viz) 82%, white), var(--viz));
+  box-shadow:var(--lift), inset 0 1px 0 rgba(255,255,255,.3);
+  transition:width .7s cubic-bezier(.22,.7,.26,1)}
 
-.caso{border-top:1px solid var(--line-soft);padding:13px}
+.caso{border-top:1px solid var(--line-soft);padding:13px;transform-style:preserve-3d;
+  transition:transform .22s cubic-bezier(.22,.7,.26,1), box-shadow .22s ease}
 .caso:first-child{border-top:0}
+.caso.sollevata{box-shadow:var(--e2);border-radius:10px;position:relative;z-index:1;background:var(--surface)}
 .caso .ct{display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;margin-bottom:10px}
 .caso .ct b{font-family:var(--font-read);font-size:16px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}
 .caso .cd{font-family:var(--font-read);font-size:13.5px;line-height:1.5;color:var(--muted);margin:0 0 11px}
@@ -141,9 +200,11 @@ main .wrap{padding-block:16px 10px;display:flex;flex-direction:column;gap:16px}
 
 /* Tuckman: cinque passi, quello corrente marcato */
 .steps{display:flex;gap:3px;margin-bottom:5px}
-.steps i{flex:1;height:5px;border-radius:2px;background:var(--track)}
-.steps i.on{background:var(--viz)}
-.steps i.cur{background:var(--accent)}
+.steps i{flex:1;height:5px;border-radius:3px;background:var(--track);box-shadow:var(--sunk);
+  transition:transform .3s cubic-bezier(.22,.7,.26,1), background .3s ease}
+.steps i.on{background:var(--viz);box-shadow:var(--lift)}
+.steps i.cur{background:var(--accent);height:7px;margin:-1px 0;border-radius:4px;
+  box-shadow:var(--e1), 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent)}
 .stepn{font-size:12.5px;font-weight:600}
 .stepn em{font-style:normal;font-weight:400;color:var(--muted)}
 
@@ -172,7 +233,12 @@ main .wrap{padding-block:16px 10px;display:flex;flex-direction:column;gap:16px}
 .chartwrap{position:relative}
 svg.chart{display:block;width:100%;height:auto}
 .gl{stroke:var(--line-soft);stroke-width:1}
-.bar{fill:var(--viz)}
+.bar{fill:url(#gBar);transform-box:fill-box;transform-origin:bottom;
+  animation:cresci .55s cubic-bezier(.22,.7,.26,1) both;animation-delay:calc(var(--i,0)*45ms)}
+.barOmbra{fill:rgba(28,25,20,.1);transform-box:fill-box;transform-origin:bottom;
+  animation:cresci .55s cubic-bezier(.22,.7,.26,1) both;animation-delay:calc(var(--i,0)*45ms)}
+:root[data-theme="dark"] .barOmbra{fill:rgba(0,0,0,.45)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .barOmbra{fill:rgba(0,0,0,.45)}}
 .tick{fill:var(--muted);font-size:9.5px;font-family:var(--font-ui);letter-spacing:.04em}
 .vlab{fill:var(--fg);font-size:10.5px;font-weight:700;font-family:var(--font-ui)}
 .tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font-size:11px;font-weight:600;
@@ -206,8 +272,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums}
 .kicker{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:18px 0 9px}
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:7px}
 .chip{appearance:none;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;
-  padding:9px 11px;border-radius:9px;cursor:pointer;min-width:0}
-.chip:hover{border-color:var(--accent)}
+  padding:9px 11px;border-radius:10px;cursor:pointer;min-width:0;box-shadow:var(--e1),var(--ring);
+  transition:transform .16s cubic-bezier(.22,.7,.26,1), box-shadow .16s ease, border-color .16s ease}
+.chip:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--e2),var(--ring)}
+.chip:active{transform:translateY(0) scale(.99);box-shadow:var(--e1)}
 .chip b{display:block;font-size:12.5px;font-weight:600;margin-bottom:2px}
 .chip i{display:block;font-style:normal;font-size:11px;line-height:1.35;color:var(--muted)}
 
@@ -216,8 +284,8 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums}
   display:flex;align-items:center;gap:8px}
 .who button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:10px;
   font-weight:600;padding:2px 7px;border-radius:5px;cursor:pointer}
-.mine .body{background:var(--surface-2);border-radius:10px;padding:10px 13px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;
-  word-break:break-word}
+.mine .body{background:var(--surface-2);border-radius:11px;padding:10px 13px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;
+  word-break:break-word;box-shadow:var(--e1),var(--ring);animation:sali .3s cubic-bezier(.22,.7,.26,1) both}
 .said{font-family:var(--font-read);font-size:16px;line-height:1.6}
 .said>*{margin:0 0 .72em}
 .said>*:last-child{margin-bottom:0}
@@ -241,7 +309,7 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums}
   font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer}
 .acts button:hover{border-color:var(--accent);color:var(--fg)}
 .acts button.pri{border-color:var(--accent);color:var(--fg)}
-.thinking{font-size:13px;color:var(--muted);font-style:italic}
+.thinking{font-size:13px;color:var(--muted);font-style:italic;animation:respira 1.5s ease-in-out infinite}
 .err{border-left:2px solid var(--critico);padding-left:11px;font-size:13.5px;line-height:1.5;color:var(--muted);margin-top:10px}
 
 footer{flex:none;background:var(--surface);border-top:1px solid var(--line)}
@@ -252,14 +320,20 @@ footer .wrap{padding-block:9px 11px}
 textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:15px;line-height:1.45;color:var(--fg);background:var(--bg);
   border:1px solid var(--line);border-radius:9px;padding:9px 11px;max-height:34vh}
 textarea::placeholder{color:var(--muted)}
-.send{appearance:none;border:0;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:12.5px;font-weight:700;
-  padding:10px 14px;border-radius:9px;cursor:pointer;flex:none}
-.send[disabled]{opacity:.45;cursor:default}
+.send{appearance:none;border:0;background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 88%, white), var(--accent));
+  color:var(--accent-ink);font:inherit;font-size:12.5px;font-weight:700;
+  padding:10px 14px;border-radius:10px;cursor:pointer;flex:none;
+  box-shadow:var(--e2), inset 0 1px 0 rgba(255,255,255,.28);transition:transform .13s ease, box-shadow .13s ease}
+.send:hover{transform:translateY(-1px);box-shadow:var(--e3), inset 0 1px 0 rgba(255,255,255,.28)}
+.send:active{transform:translateY(1px) scale(.985);box-shadow:var(--e1), inset 0 1px 3px rgba(0,0,0,.2)}
+.send[disabled]{opacity:.45;cursor:default;transform:none;box-shadow:var(--e1)}
 .hint{font-size:10.5px;color:var(--muted);margin-top:7px;line-height:1.4}
 
-.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,11,13,.45);display:flex;align-items:flex-end;justify-content:center}
-.sheet>div{background:var(--surface);width:100%;max-width:820px;max-height:88%;overflow-y:auto;border-radius:14px 14px 0 0;
-  border-top:1px solid var(--line);
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,11,13,.45);display:flex;align-items:flex-end;justify-content:center;
+  animation:entra .18s ease both;backdrop-filter:blur(2px)}
+.sheet>div{background:var(--surface);width:100%;max-width:820px;max-height:88%;overflow-y:auto;border-radius:16px 16px 0 0;
+  border-top:1px solid var(--line);box-shadow:var(--e3),var(--ring);
+  animation:suscard .3s cubic-bezier(.22,.78,.26,1) both;
   padding:16px max(16px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
 .sheet h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin:0 0 3px}
 .sheet h3{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
@@ -313,6 +387,7 @@ textarea::placeholder{color:var(--muted)}
     <div class="wrap">
       <button id="tAperti">Aperti<span class="badge" id="bdg" hidden>0</span></button>
       <button id="tContesto">Il tuo contesto</button>
+      <button id="tDiario">Diario<span class="badge" id="bdgD" hidden>0</span></button>
       <button id="tGuida" aria-pressed="false">Guida</button>
       <button id="tNuova">Nuova</button>
     </div>
@@ -409,6 +484,41 @@ var hint=document.getElementById("hint"), piede=document.getElementById("piede")
 
 /* ===================== utilità ===================== */
 function el(t,c,x){var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e;}
+var fermo=false, puntatoreFine=false;
+try{ fermo=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+     puntatoreFine=window.matchMedia("(hover: hover) and (pointer: fine)").matches; }catch(e){}
+/* conta fino a un numero, invece di comparire */
+function conta(nodo,fino){
+  if(fermo||fino<=0){ nodo.textContent=String(fino); return; }
+  var dur=Math.min(900,420+fino*14), t0=null;
+  function passo(t){
+    if(t0===null)t0=t;
+    var p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    nodo.textContent=String(Math.round(fino*e));
+    if(p<1)requestAnimationFrame(passo); else nodo.textContent=String(fino);
+  }
+  nodo.textContent="0"; requestAnimationFrame(passo);
+}
+/* riempi una pista dopo l'inserimento, cosi' la transizione parte */
+function riempi(barra,perc){
+  if(fermo){ barra.style.transition="none"; barra.style.width=perc+"%"; return; }
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ barra.style.width=perc+"%"; }); });
+}
+/* inclinazione al puntatore: solo mouse, mai al tocco, mai con movimento ridotto */
+function inclina(nodo,gradi){
+  if(fermo||!puntatoreFine)return;
+  var g=gradi||4;
+  nodo.addEventListener("pointermove",function(ev){
+    if(ev.pointerType!=="mouse")return;
+    var r=nodo.getBoundingClientRect();
+    var x=(ev.clientX-r.left)/r.width-.5, y=(ev.clientY-r.top)/r.height-.5;
+    nodo.style.transform="perspective(900px) rotateY("+(x*g).toFixed(2)+"deg) rotateX("+(-y*g).toFixed(2)+"deg) translateZ(6px)";
+    nodo.classList.add("sollevata");
+  });
+  nodo.addEventListener("pointerleave",function(){
+    nodo.style.transform=""; nodo.classList.remove("sollevata");
+  });
+}
 function sv(t,a){var e=document.createElementNS("http://www.w3.org/2000/svg",t);
   for(var k in a)if(a[k]!=null)e.setAttribute(k,a[k]); return e;}
 function scrolla(){var m=document.getElementById("main"); m.scrollTop=m.scrollHeight;}
@@ -526,12 +636,14 @@ function disegnaPlancia(){
 
   /* KPI */
   var k=el("div","kpi");
+  var iT=0;
   function tile(lab,val,uni,cls){
-    var t=el("div","tile"); t.appendChild(el("div","k",lab));
-    var v=el("div","v num",String(val)); t.appendChild(v);
+    var t=el("div","tile sali"); t.style.setProperty("--i",iT++);
+    t.appendChild(el("div","k",lab));
+    var v=el("div","v num"); t.appendChild(v); conta(v,val);
     if(uni){ var u=el("div","u"); if(cls){ var p=el("span","pill "+cls); p.appendChild(el("i","dot"));
         p.appendChild(document.createTextNode(uni)); u.appendChild(p); } else u.textContent=uni; t.appendChild(u); }
-    k.appendChild(t);
+    inclina(t,5); k.appendChild(t);
   }
   tile("Segnati",c.aperto,"Aperto","st-aperto");
   tile("In lavorazione",c.corso,"In corso","st-corso");
@@ -550,10 +662,11 @@ function disegnaPlancia(){
     sb.appendChild(e0);
   }else{
     var sc=el("div","score");
-    var big=el("div","big num",String(perc)); big.appendChild(el("i",null,"%")); sc.appendChild(big);
+    var big=el("div","big num"); var np=el("span"); big.appendChild(np); big.appendChild(el("i",null,"%"));
+    sc.appendChild(big); conta(np,perc);
     sc.appendChild(el("div","leg",chiusi+" impegni chiusi su "+tot+(scad?" · "+scad+" oltre la data concordata":"")));
     sb.appendChild(sc);
-    var m=el("div","meter"); var mi=el("i"); mi.style.width=perc+"%"; m.appendChild(mi); sb.appendChild(m);
+    var m=el("div","meter"); var mi=el("i"); m.appendChild(mi); sb.appendChild(m); riempi(mi,perc);
   }
   sp.appendChild(sb); plancia.appendChild(sp);
 
@@ -595,7 +708,9 @@ function disegnaPlancia(){
     cb.appendChild(e2); cp.appendChild(cb);
   }else{
     var ord={aperto:0,corso:1,risolto:2};
-    schede.slice().sort(function(a,b){ return ord[statoDi(a)]-ord[statoDi(b)]; }).forEach(function(s){ cp.appendChild(caso(s)); });
+    schede.slice().sort(function(a,b){ return ord[statoDi(a)]-ord[statoDi(b)]; }).forEach(function(s,i){
+      var n=caso(s); n.classList.add("sali"); n.style.setProperty("--i",i+3); inclina(n,2.2); cp.appendChild(n);
+    });
   }
   plancia.appendChild(cp);
 }
@@ -608,6 +723,10 @@ function grafico(w){
   var tip=el("div","tip"); wrap.appendChild(tip);
   var s=sv("svg",{class:"chart",viewBox:"0 0 "+W+" "+H,role:"img",
     "aria-label":"Impegni chiusi per settimana nelle ultime otto settimane"});
+  var defs=sv("defs"), gr=sv("linearGradient",{id:"gBar",x1:"0",y1:"0",x2:"0",y2:"1"});
+  gr.appendChild(sv("stop",{offset:"0","stop-color":"var(--viz)","stop-opacity":"1"}));
+  gr.appendChild(sv("stop",{offset:"1","stop-color":"var(--viz)","stop-opacity":".72"}));
+  defs.appendChild(gr); s.appendChild(defs);
   [0,.5,1].forEach(function(f){
     var y=T+ih-ih*f;
     s.appendChild(sv("line",{class:"gl",x1:L,x2:W-R,y1:y,y2:y}));
@@ -615,7 +734,10 @@ function grafico(w){
   });
   w.forEach(function(x,k){
     var cx=L+bw*k+bw/2, h=x.n/top*ih, y=T+ih-h;
-    if(x.n>0) s.appendChild(sv("rect",{class:"bar",x:cx-bar/2,y:y,width:bar,height:Math.max(h,3),rx:4}));
+    if(x.n>0){
+      s.appendChild(sv("rect",{class:"barOmbra",x:cx-bar/2+1.5,y:y+2,width:bar,height:Math.max(h,3),rx:4,style:"--i:"+k}));
+      s.appendChild(sv("rect",{class:"bar",x:cx-bar/2,y:y,width:bar,height:Math.max(h,3),rx:4,style:"--i:"+k}));
+    }
     var et=sv("text",{class:"tick",x:cx,y:H-7,"text-anchor":"middle"}); et.textContent=x.et; s.appendChild(et);
     if(x.n===max&&max>0){ var vl=sv("text",{class:"vlab",x:cx,y:y-5,"text-anchor":"middle"}); vl.textContent=x.n; s.appendChild(vl); }
     var hit=sv("rect",{class:"hit",x:L+bw*k,y:T,width:bw,height:ih});
@@ -674,8 +796,8 @@ function caso(s){
   var mine=impDi(s.titolo), ch=mine.filter(function(i){return i.fatto;}).length;
   var pr=el("div","prog"); pr.style.marginTop="12px";
   if(mine.length){
-    var m=el("div","meter"); var mi=el("i"); mi.style.width=Math.round(ch/mine.length*100)+"%"; m.appendChild(mi);
-    pr.appendChild(m);
+    var m=el("div","meter"); var mi=el("i"); m.appendChild(mi);
+    pr.appendChild(m); riempi(mi,Math.round(ch/mine.length*100));
     var next=mine.filter(function(i){return !i.fatto&&i.scadenza;}).sort(function(a,b){return a.scadenza<b.scadenza?-1:1;})[0];
     var txt=ch+" di "+mine.length+" impegni";
     pr.appendChild(el("span","num",txt));
@@ -695,6 +817,11 @@ function caso(s){
   var a=el("button",null,"Allega alla conversazione");
   a.onclick=function(){ allegata={titolo:s.titolo,testo:testoScheda(s)}; mostraAllegata(); setVista("parla"); box.focus(); };
   r.appendChild(a);
+  if(s.nota&&s.nota.url){
+    var lk=el("a",null,"Nota nel diario"); lk.href=s.nota.url; lk.target="_blank"; lk.rel="noopener noreferrer";
+    lk.style.cssText="font-size:11px;font-weight:600;padding:4px 9px;border:1px solid var(--line);border-radius:6px;color:var(--fg);text-decoration:none";
+    r.appendChild(lk);
+  }
   if(canWrite){
     var st2=statoDi(s);
     if(st2!=="corso"){ var b1=el("button",null,"Metti in lavorazione"); b1.onclick=function(){cambiaStato(s,"corso",b1);}; r.appendChild(b1); }
@@ -706,7 +833,7 @@ function caso(s){
 }
 async function cambiaStato(s,nuovo,btn){
   btn.disabled=true; var old=btn.textContent; btn.textContent="…";
-  try{ await db.doc("schede/"+s.id).update({stato:nuovo,aggiornata:new Date().toISOString()}); }
+  try{ await db.doc("schede/"+s.id).update({stato:nuovo,aggiornata:new Date().toISOString()}); diarioDopoStato(s,nuovo); }
   catch(e){ btn.disabled=false; btn.textContent=old; }
 }
 function testoScheda(s){
@@ -844,7 +971,8 @@ function disegnaGuida(){
   [["A voce","Turni di due a cinque frasi, una domanda per volta, nessuna tabella. Serve nella fase in cui stai ancora capendo: in macchina, uscendo da una riunione. Tocca «Ascolta» sotto una risposta per farla leggere."],
    ["Scritto","Il documento da rileggere e usare: diagnosi, piano a 7/30/90 giorni, le parole esatte da dire. Usa il modello più capace, quindi può metterci fino a un minuto prima di iniziare a scrivere."],
    ["Lo score di avanzamento","È la quota di impegni presi che risultano chiusi. Non dice se il problema è risolto: dice se quello che hai deciso di fare è stato fatto. Due numeri diversi, e confonderli è il modo classico di mentire a sé stessi con una dashboard."],
-   ["La riga piatta","Nel grafico settimanale, zero chiusure con casi aperti è il segnale che conta: il follow-up si è fermato. Più informativo di qualunque percentuale."]]
+   ["La riga piatta","Nel grafico settimanale, zero chiusure con casi aperti è il segnale che conta: il follow-up si è fermato. Più informativo di qualunque percentuale."],
+   ["Il diario","Ogni caso archiviato diventa una nota nel vault Bejelith (Lavoro, Gestione gruppi), con stato e impegni; gli eventi finiscono in un log datato. Se cambi lo stato o spunti un impegno nella nota, l'app lo rilegge alla sincronizzazione. Una nota con il tag caso-team può diventare un caso. Le ultime note del diario danno contesto al consulente: si disattiva dal pannello Diario."]]
    .forEach(function(x){ var b=el("div","box"); b.appendChild(el("b",null,x[0])); b.appendChild(el("p",null,x[1])); du.appendChild(b); });
   pb2.appendChild(du); p2.appendChild(pb2); guida.appendChild(p2);
 
@@ -884,6 +1012,9 @@ function disegnaGuida(){
   var b1=el("button",null,"Torna a parlare"); b1.onclick=function(){ setVista("parla"); };
   var b2=el("button",null,"Vai alla plancia"); b2.onclick=function(){ setVista("plancia"); };
   fine.appendChild(b1); fine.appendChild(b2); guida.appendChild(fine);
+  Array.prototype.forEach.call(guida.children,function(n,i){
+    n.classList.add("sali"); n.style.setProperty("--i",i);
+  });
   guida.dataset.pronta="1";
 }
 
@@ -897,6 +1028,8 @@ function setVista(v){
   if(v==="plancia") disegnaPlancia();
   else if(v==="guida") disegnaGuida();
   else if(!turni.length) home();
+  var attiva=v==="plancia"?plancia:v==="guida"?guida:flow;
+  if(!fermo){ attiva.classList.remove("vista-entra"); void attiva.offsetWidth; attiva.classList.add("vista-entra"); }
   document.getElementById("main").scrollTop=0;
 }
 function nuovaConversazione(){
@@ -967,7 +1100,7 @@ function rigaImpegno(i){
   var r=el("div","imp");
   var t=el("button","tick2",""); t.setAttribute("aria-label","Segna fatto"); t.title="Segna fatto";
   t.onclick=async function(){ t.textContent="✓"; t.disabled=true;
-    try{ await db.doc("impegni/"+i.id).update({fatto:true,chiuso:new Date().toISOString()}); }
+    try{ await db.doc("impegni/"+i.id).update({fatto:true,chiuso:new Date().toISOString()}); diarioDopoImpegno(i,true); }
     catch(e){ t.textContent=""; t.disabled=false; } };
   var x=el("div","tx",i.testo||"");
   var m=el("span","me"+(scaduto(i.scadenza)?" late":""));
@@ -976,7 +1109,7 @@ function rigaImpegno(i){
   x.appendChild(m);
   var d=el("button","x","×"); d.setAttribute("aria-label","Elimina");
   d.onclick=async function(){ if(d.textContent!=="?"){d.textContent="?";return;} d.disabled=true;
-    try{ await db.doc("impegni/"+i.id).delete(); }catch(e){ d.disabled=false; d.textContent="×"; } };
+    try{ await db.doc("impegni/"+i.id).delete(); diarioDopoImpegno(i,null); }catch(e){ d.disabled=false; d.textContent="×"; } };
   r.appendChild(t); r.appendChild(x); if(canWrite)r.appendChild(d);
   return r;
 }
@@ -1066,6 +1199,9 @@ function setModo(m){
   box.placeholder=m==="voce"?"Cosa è successo…":"Cosa ti serve per iscritto…";
 }
 function contesto(){
+  return contestoManager()+contestoDiario();
+}
+function contestoManager(){
   if(!profilo)return "";
   var r=PROF.map(function(f){var v=(profilo[f[0]]||"").trim(); return v?(f[1]+": "+v):"";}).filter(Boolean);
   return r.length?"\n\nCONTESTO FISSO DEL MANAGER, vero per ogni conversazione — tienilo presente e non richiederlo:\n"+r.join("\n"):"";
@@ -1092,6 +1228,7 @@ async function invia(testoDato){
   if(turni[0].role!=="user") turni.shift();
   inCorso=true; bSend.disabled=true; bSend.textContent="…";
   var v=turnoSuo(); ctl=new AbortController();
+  try{ await caricaContestoDiario(false); }catch(e){}
   var ultimo=turni.length-1;
   var input=[{role:"user",content:ISTR+contesto()}].concat(turni.map(function(t,i){
     return (i===ultimo&&t.role==="user")?{role:"user",content:t.content+MODO[modo]}:t;
@@ -1147,7 +1284,7 @@ function sheetImpegni(){
       x.appendChild(m); r.appendChild(t); r.appendChild(x);
       if(canWrite){ var ri=el("button","x","↺"); ri.title="Riapri";
         ri.onclick=async function(){ ri.disabled=true;
-          try{ await db.doc("impegni/"+i.id).update({fatto:false}); s.back.remove(); }catch(e){ ri.disabled=false; } };
+          try{ await db.doc("impegni/"+i.id).update({fatto:false}); diarioDopoImpegno(i,false); s.back.remove(); }catch(e){ ri.disabled=false; } };
         r.appendChild(ri); }
       o2.appendChild(r);
     });
@@ -1178,11 +1315,11 @@ function sheetProfilo(){
 }
 
 /* ===================== archiviazione ===================== */
-async function sheetArchivia(testo){
+async function sheetArchivia(testo,fonte){
   var s=sheet("Archivia","Estraggo il caso, lo stadio del gruppo, i bisogni sotto pressione e gli impegni con le date. Correggi quello che serve, poi salva.");
   var stato=el("div","offline","Sto leggendo la conversazione…"); s.p.appendChild(stato); s.fine();
   if(!sample){ stato.textContent="Serve Claude per estrarre il caso."; return; }
-  var ultimi=turni.slice(-10).map(function(t){return (t.role==="user"?"MANAGER: ":"CONSULENTE: ")+String(t.content).slice(0,7000);}).join("\n\n");
+  var ultimi=fonte?("NOTA DEL MANAGER (dal diario):\n"+String(fonte.testo).slice(0,12000)):turni.slice(-10).map(function(t){return (t.role==="user"?"MANAGER: ":"CONSULENTE: ")+String(t.content).slice(0,7000);}).join("\n\n");
   var dati=null;
   try{
     dati=await sample.json(
@@ -1269,20 +1406,388 @@ async function sheetArchivia(testo){
       aggiornata:new Date().toISOString(),creata:new Date().toISOString()};
     CAMPI.forEach(function(f){ d[f[0]]=caselle[f[0]].value.trim(); });
     try{
-      await db.collection("schede").add(d);
+      var ref=await db.collection("schede").add(d);
       for(var k=0;k<righe.length;k++){
         var r=righe[k];
         if(!r.ck.checked||!r.tx.value.trim())continue;
         await db.collection("impegni").add({testo:r.tx.value.trim(),chi:r.who.value.trim(),
           scadenza:r.dt.value||"",fatto:false,scheda:d.titolo,creato:new Date().toISOString()});
       }
-      s.back.remove(); setVista("plancia");
+      s.back.remove(); diarioDopoArchivia(ref.id,d.titolo,fonte); setVista("plancia");
     }catch(e){
       b.disabled=false; b.textContent="Salva il caso e gli impegni";
       s.p.insertBefore(el("div","offline","Non è stato possibile salvare: "+((e&&e.code)||"errore")+"."),s.p.children[1]);
     }
   };
   s.p.insertBefore(b,dopo.nextSibling);
+}
+
+/* ===================== diario: vault Bejelith su Drive ===================== */
+/* Casi -> note .md nella cartella Lavoro/Gestione gruppi; modifiche alle note -> di nuovo nell'app.
+   Il connettore Drive non sa riscrivere il contenuto di un file: una nota si aggiorna creando la nuova versione
+   e mettendo la vecchia nel cestino (solo file creati da questa pagina). */
+var DRV="Google Drive";
+var ID_CASI="1DYhxUXnbTcYalHK3tXWE9ecdN_QLSuuf";    /* Lavoro / Gestione gruppi */
+var ID_DIARIO="1pyJE4O_wVDnpPaO9g9Vojeb3qRzPe2lM";  /* Diario (note giornaliere) */
+var mcp=null, dStato={ok:null,msg:"",ultimo:0}, dPref={}, ctxD="", ctxQuando=0;
+var daImportare=[], sincInCorso=false, codaN={}, codaT=null, inCoda=false, logCoda=[], ultimoSync=0;
+
+function dErr(e){
+  var c=(e&&e.code)||"errore";
+  var m={
+    needs_reauth:"Riconnetti Google Drive in Impostazioni, Connettori di claude.ai.",
+    server_not_connected:"Google Drive non è connesso: aggiungilo in Impostazioni, Connettori di claude.ai.",
+    selection_required:"Hai più connettori Google Drive: scegline uno quando Claude te lo chiede.",
+    not_in_manifest:"Hai negato a questa pagina l'accesso a Google Drive.",
+    approval_required:"Serve la tua approvazione per Drive: tocca Sincronizza ora e consenti.",
+    consent_required:"Serve il tuo consenso per usare Drive.",
+    blocked_by_policy:"Google Drive è bloccato dalle regole della tua organizzazione.",
+    server_unavailable:"Drive non risponde: riprova fra poco.",
+    upstream_error:"Problema di collegamento con Drive: riprova fra poco.",
+    tool_error:"Drive ha rifiutato l'operazione."
+  };
+  return m[c]||("Errore con Drive ("+c+").");
+}
+function oraIt(){ return new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}); }
+function giorno(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function diarioAttivo(){ return !!(mcp&&db&&canWrite); }
+function usaCtx(){ return !(dPref&&dPref.usaContesto===false); }
+function pausa(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+var dTraccia=[];
+function tr(m){ dTraccia.push(oraIt()+" "+m); if(dTraccia.length>40)dTraccia.shift(); }
+
+async function dcall(tool,input){
+  if(!mcp)throw {code:"server_not_connected"};
+  var r=await mcp.callTool(DRV,tool,input||{},{cache:false});
+  tr(tool+" -> "+(r&&typeof r==="object"?Object.keys(r).join("/"):typeof r)+" | payload "+(typeof (r&&r.payload))+((r&&r.payload&&r.payload.id)?" id="+r.payload.id:""));
+  var p=(r&&r.payload!==undefined)?r.payload:null;
+  if(p===null&&r&&r.content&&r.content[0]&&typeof r.content[0].text==="string"){
+    try{ p=JSON.parse(r.content[0].text); }catch(e){ p=r.content[0].text; }
+  }
+  return p;
+}
+function deB64(b){
+  var bin=atob(String(b).replace(/\s/g,"")), u=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(u);
+}
+async function leggiFile(id){
+  var r=await dcall("download_file_content",{fileId:id});
+  return (r&&r.content)?deB64(r.content):"";
+}
+async function dLista(parentId,extra){
+  var out=[], tok=null, n=0;
+  do{
+    var inp={query:"parentId = '"+parentId+"' and trashed = false"+(extra?" and "+extra:""),excludeContentSnippets:true,pageSize:100};
+    if(tok)inp.pageToken=tok;
+    var r=await dcall("search_files",inp);
+    ((r&&r.files)||[]).forEach(function(f){ out.push(f); });
+    tok=r&&r.nextPageToken; n++;
+  }while(tok&&n<4);
+  return out;
+}
+
+/* ---------- testo delle note ---------- */
+function nomeSicuro(t){
+  return String(t||"Senza nome").replace(/[\\\/:*?"<>|#^\[\]]/g," ").replace(/\s+/g," ").trim().slice(0,70)||"Senza nome";
+}
+function nomeNota(s){
+  var dup=schede.some(function(x){ return x.id!==s.id&&nomeSicuro(x.titolo)===nomeSicuro(s.titolo); });
+  return "Caso - "+nomeSicuro(s.titolo)+(dup?" ("+String(s.id).slice(0,4)+")":"");
+}
+function lnk(s){ return "[["+nomeNota(s)+"]]"; }
+function schedaPerTitolo(t){ return schede.filter(function(x){ return x.titolo===t; })[0]; }
+function testoNota(s){
+  var L=[], imps=impDi(s.titolo);
+  L.push("---","tipo: caso","caso_id: "+s.id,"stato: "+statoDi(s),
+    "stadio: "+(s.stadioCodice||""),"sicurezza: "+(s.sicurezzaLivello||""),
+    "scarf: ["+((s.scarf||[]).join(", "))+"]",
+    "aggiornata: "+new Date().toISOString(),
+    "tags: [bejelith, lavoro, caso-team]","---");
+  L.push("# "+(s.titolo||"Senza nome"),"");
+  L.push("Nota generata da Gestione gruppi. Puoi cambiare `stato` (aperto, corso, risolto) e spuntare gli impegni: l'app li rilegge alla prossima sincronizzazione. Vedi anche [[Bejelith - Indice]].","");
+  CAMPI.forEach(function(f){
+    var v=(s[f[0]]||"").trim();
+    if(v){ L.push("## "+f[1],v,""); }
+  });
+  L.push("## Impegni");
+  if(!imps.length)L.push("_Nessun impegno registrato._");
+  imps.forEach(function(i){
+    L.push("- ["+(i.fatto?"x":" ")+"] "+(i.testo||"")+(i.chi?" — "+i.chi:"")+(i.scadenza?" — entro "+i.scadenza:"")+" <!--imp:"+i.id+"-->");
+  });
+  return L.join("\n")+"\n";
+}
+function leggiNota(txt){
+  txt=String(txt).replace(/^﻿/,"").replace(/\r\n/g,"\n");
+  var m=/^---[ \t]*\n([\s\S]*?)\n---/.exec(txt), fm={};
+  if(m){
+    m[1].split("\n").forEach(function(r){
+      var k=/^([A-Za-z_][\w-]*):[ \t]*(.*)$/.exec(r);
+      if(k)fm[k[1]]=k[2].trim();
+    });
+  }
+  var corpo=m?txt.slice(m[0].length):txt, chk={}, re=/^[ \t]*-[ \t]*\[([ xX])\][^\n]*?<!--imp:([^>\s]+?)\s*-->/gm, x;
+  while((x=re.exec(corpo)))chk[x[2]]=(x[1]!==" ");
+  return {fm:fm,corpo:corpo,chk:chk};
+}
+function pulisciNota(t){
+  return String(t).replace(/\r\n/g,"\n").replace(/^﻿/,"").replace(/^---[ \t]*\n[\s\S]*?\n---[ \t]*\n?/,"")
+    .replace(/\[\[([^\]|]*)(\|[^\]]*)?\]\]/g,"$1").trim();
+}
+function testoLog(voci){
+  var L=["---","tags: [bejelith, log, gestione-gruppi]","---","# Gestione gruppi — Log","",
+    "Storico degli eventi dell'app Gestione gruppi. Vedi anche [[Bejelith - Indice]]."], cur="";
+  voci.forEach(function(v){
+    var g=giorno(v.ts);
+    if(g!==cur){
+      cur=g; var p=g.split("-");
+      L.push("","## "+new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"}),"");
+    }
+    L.push("- "+new Date(v.ts).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"})+" · "+v.t);
+  });
+  return L.join("\n")+"\n";
+}
+
+/* ---------- app -> diario ---------- */
+async function scriviNota(s){
+  var f=await dcall("create_file",{title:nomeNota(s)+".md",parentId:ID_CASI,textContent:testoNota(s),
+    contentMimeType:"text/markdown",disableConversionToGoogleType:true});
+  if(!f||!f.id)throw {code:"upstream_error"};
+  var vecchio=s.nota&&s.nota.fileId;
+  var nuova={fileId:f.id,modificata:f.modifiedTime||new Date().toISOString(),url:f.viewUrl||""};
+  await db.doc("schede/"+s.id).update({nota:nuova});
+  s.nota=nuova;
+  tr("nota salvata nel database: "+f.id);
+  if(vecchio&&vecchio!==f.id){ try{ await dcall("trash_file",{fileId:vecchio}); }catch(e){} }
+}
+async function scriviLog(){
+  var nuove=logCoda.slice();
+  if(!nuove.length)return;
+  var ref=db.doc("diario/log"), snap=await ref.get(), cur=snap.exists?(snap.data()||{}):{};
+  var voci=(cur.voci||[]).concat(nuove).slice(-300);
+  var f=await dcall("create_file",{title:"Gestione gruppi - Log.md",parentId:ID_CASI,textContent:testoLog(voci),
+    contentMimeType:"text/markdown",disableConversionToGoogleType:true});
+  if(!f||!f.id)throw {code:"upstream_error"};
+  await ref.set({voci:voci,fileId:f.id,url:f.viewUrl||"",aggiornato:new Date().toISOString()});
+  logCoda.splice(0,nuove.length);
+  if(cur.fileId&&cur.fileId!==f.id){ try{ await dcall("trash_file",{fileId:cur.fileId}); }catch(e){} }
+}
+function registra(testo){
+  logCoda.push({ts:new Date().toISOString(),t:testo});
+  pianifica("__log");
+}
+function pianifica(k){
+  if(!diarioAttivo())return;
+  codaN[k]=1; clearTimeout(codaT); codaT=setTimeout(svuotaCoda,2500);
+}
+async function svuotaCoda(){
+  if(inCoda){ codaT=setTimeout(svuotaCoda,1500); return; }
+  inCoda=true;
+  var chiavi=Object.keys(codaN), k=0;
+  codaN={};
+  tr("coda: "+(chiavi.join(",")||"vuota")+" | schede in memoria "+schede.length);
+  try{
+    for(k=0;k<chiavi.length;k++){
+      var c=chiavi[k];
+      if(c==="__log"){ await scriviLog(); continue; }
+      var s=schede.filter(function(x){ return x.id===c; })[0];
+      tr("scheda "+c+(s?" trovata":" NON trovata"));
+      if(s)await scriviNota(s);
+    }
+    dStato={ok:true,msg:"Diario aggiornato alle "+oraIt()+".",ultimo:Date.now()};
+  }catch(e){
+    for(var j=k;j<chiavi.length;j++)codaN[chiavi[j]]=1;
+    dStato={ok:false,msg:dErr(e)+(e&&e.message?" ["+String(e.message).slice(0,160)+"]":""),ultimo:dStato.ultimo};
+  }finally{ inCoda=false; segnaStato(); }
+  return dStato.ok!==false;
+}
+function diarioDopoStato(s,nuovo){
+  registra("Caso «"+s.titolo+"»: stato "+(STATI[nuovo]||STATI.aperto)[0].toLowerCase()+" ("+lnk(s)+")");
+  pianifica(s.id);
+}
+function diarioDopoImpegno(i,fatto){
+  var s=schedaPerTitolo(i.scheda);
+  registra((fatto===true?"Impegno chiuso":fatto===false?"Impegno riaperto":"Impegno eliminato")+": "+(i.testo||"")+(s?" ("+lnk(s)+")":""));
+  if(s)pianifica(s.id);
+}
+function diarioDopoArchivia(id,titolo,fonte){
+  registra("Nuovo caso archiviato: «"+titolo+"»"+(fonte?" (importato da una nota del diario)":""));
+  pianifica(id);
+  if(fonte&&fonte.fileId)segnaTrattata(fonte.fileId);
+}
+async function segnaTrattata(id){
+  dPref=Object.assign({},dPref,{trattate:(dPref.trattate||[]).concat([id]).slice(-200)});
+  daImportare=daImportare.filter(function(x){ return x.id!==id; });
+  aggiornaBadgeD();
+  try{ await db.doc("profilo/diario").set(dPref); }catch(e){}
+}
+
+/* ---------- diario -> app ---------- */
+async function sincronizza(){
+  if(!mcp||!db||sincInCorso)return;
+  sincInCorso=true; dStato={ok:null,msg:"Sincronizzo…",ultimo:dStato.ultimo}; segnaStato();
+  try{
+    for(var w=0;w<40&&!dbPronto;w++)await pausa(250);
+    await pausa(500);
+    tr("sync: canWrite="+canWrite+" db="+(!!db)+" mcp="+(!!mcp)+" schede="+schede.length+" dbPronto="+dbPronto);
+    if(canWrite){
+      schede.forEach(function(s){ if(!s.nota)codaN[s.id]=1; });
+      if(logCoda.length)codaN["__log"]=1;
+    }
+    var daScrivere=Object.keys(codaN).length, nCasi=schede.length;
+    clearTimeout(codaT);
+    while(inCoda)await pausa(300);
+    var scrittoOk=await svuotaCoda(), errW=scrittoOk?"":dStato.msg;
+    var files=await dLista(ID_CASI,"mimeType != 'application/vnd.google-apps.folder'");
+    var perId={}; files.forEach(function(f){ perId[f.id]=f; });
+    var cambi=0;
+    for(var a=0;a<schede.length;a++){
+      var s=schede[a];
+      if(!s.nota||!s.nota.fileId)continue;
+      var f=perId[s.nota.fileId];
+      if(!f||!(String(f.modifiedTime)>String(s.nota.modificata)))continue;
+      var n=leggiNota(await leggiFile(f.id)), cm=[];
+      var st=String(n.fm.stato||"").toLowerCase().replace(/["']/g,"");
+      if(canWrite){
+        if(STATI[st]&&st!==statoDi(s)){
+          await db.doc("schede/"+s.id).update({stato:st,aggiornata:new Date().toISOString()});
+          cm.push("stato "+STATI[st][0].toLowerCase());
+        }
+        var imps=impDi(s.titolo);
+        for(var b=0;b<imps.length;b++){
+          var i=imps[b], nf=n.chk[i.id];
+          if(nf===undefined||nf===!!i.fatto)continue;
+          await db.doc("impegni/"+i.id).update(nf?{fatto:true,chiuso:new Date().toISOString()}:{fatto:false});
+          cm.push((nf?"chiuso: ":"riaperto: ")+(i.testo||""));
+        }
+        var nuova={fileId:s.nota.fileId,modificata:f.modifiedTime,url:s.nota.url||f.viewUrl||""};
+        await db.doc("schede/"+s.id).update({nota:nuova});
+        s.nota=nuova;
+        if(cm.length){ registra("Dal diario, caso «"+s.titolo+"»: "+cm.join("; ")); cambi++; }
+      }
+    }
+    await cercaDaImportare(perId);
+    ultimoSync=Date.now();
+    dStato={ok:scrittoOk,msg:"Sincronizzato alle "+oraIt()+" · casi "+nCasi+", note da scrivere "+daScrivere+(canWrite?"":", sola lettura")+(cambi?" · "+cambi+(cambi===1?" caso aggiornato":" casi aggiornati")+" dal diario":"")+"."+(scrittoOk?"":" Scrittura sul diario NON riuscita: "+errW),ultimo:ultimoSync};
+  }catch(e){
+    tr("errore sync: "+((e&&e.code)||"")+" "+String((e&&e.message)||e).slice(0,120));
+    dStato={ok:false,msg:dErr(e),ultimo:dStato.ultimo};
+  }finally{ sincInCorso=false; segnaStato(); }
+}
+async function cercaDaImportare(perId){
+  var res=await dcall("search_files",{query:"fullText contains 'caso-team' and mimeType = 'text/markdown' and trashed = false",
+    excludeContentSnippets:true,pageSize:25});
+  var notaIds={}; schede.forEach(function(s){ if(s.nota&&s.nota.fileId)notaIds[s.nota.fileId]=1; });
+  var gia=(dPref.trattate||[]);
+  var out=[];
+  var cand=((res&&res.files)||[]).filter(function(f){
+    return !notaIds[f.id]&&gia.indexOf(f.id)<0&&!/^Caso - /.test(f.title||"")&&!/^Gestione gruppi - Log/.test(f.title||"");
+  }).slice(0,6);
+  for(var k=0;k<cand.length;k++){
+    var t=await leggiFile(cand[k].id), n=leggiNota(t);
+    if(n.fm.caso_id)continue;
+    out.push({id:cand[k].id,title:String(cand[k].title||"").replace(/\.md$/,""),url:cand[k].viewUrl||"",testo:pulisciNota(t)});
+  }
+  daImportare=out; aggiornaBadgeD();
+}
+async function caricaContestoDiario(forza){
+  if(!mcp||!usaCtx())return;
+  if(!forza&&ctxD&&Date.now()-ctxQuando<10*60*1000)return;
+  try{
+    var fs=await dLista(ID_DIARIO,"mimeType = 'text/markdown'");
+    fs.sort(function(a,b){ return a.title<b.title?1:a.title>b.title?-1:0; });
+    var parti=[];
+    for(var k=0;k<Math.min(3,fs.length);k++){
+      parti.push("[Nota del "+String(fs[k].title).replace(/\.md$/,"")+"]\n"+pulisciNota(await leggiFile(fs[k].id)).slice(0,2200));
+    }
+    ctxD=parti.join("\n\n"); ctxQuando=Date.now();
+  }catch(e){ dStato={ok:false,msg:dErr(e),ultimo:dStato.ultimo}; segnaStato(); }
+}
+function contestoDiario(){
+  if(!ctxD||!usaCtx())return "";
+  return "\n\nDIARIO PERSONALE DEL MANAGER (ultime note, riservato). Serve solo a capire in che stato arriva il manager e quali suoi schemi ricorrenti possono entrare nel caso: stress, rimuginio, reazioni sotto pressione, rapporto con i superiori. "+
+    "Regole: usalo solo se cambia davvero la lettura o il consiglio, e in quel caso dillo in una frase senza citare il diario; non riportare dettagli su salute, corpo, alimentazione o vita privata se il caso non li richiede; non farne diagnosi; ogni ipotesi sul manager va presentata come ipotesi da verificare. Se non c'entra, ignoralo del tutto.\n---\n"+ctxD+"\n---";
+}
+
+/* ---------- interfaccia ---------- */
+function aggiornaBadgeD(){
+  var b=document.getElementById("bdgD"); if(!b)return;
+  b.hidden=!daImportare.length; b.textContent=daImportare.length;
+}
+function segnaStato(){
+  var t=document.getElementById("tDiario");
+  if(t)t.title=dStato.msg||"";
+  aggiornaBadgeD();
+}
+function sheetDiario(){
+  var s=sheet("Diario","Collegamento con il vault Bejelith su Drive: i casi diventano note, e le modifiche che fai alle note tornano nell'app.");
+  if(!mcp){
+    s.p.appendChild(el("div","offline","Google Drive non è raggiungibile da questa visualizzazione. Apri la pagina dentro Claude e consenti l'accesso a Drive."));
+    s.fine(); return;
+  }
+  s.p.appendChild(el("div","offline",dStato.msg||"Non ancora sincronizzato."));
+  if(!canWrite)s.p.appendChild(el("div","offline","Sei in sola lettura: il diario può solo fornire contesto."));
+  var rw=el("div","row");
+  var bs=el("button",null,"Sincronizza ora");
+  bs.onclick=async function(){
+    bs.disabled=true; bs.textContent="…";
+    await caricaContestoDiario(true);
+    await sincronizza();
+    s.back.remove(); sheetDiario();
+  };
+  rw.appendChild(bs);
+  var bl=el("a",null,"Apri la cartella"); bl.href="https://drive.google.com/drive/folders/"+ID_CASI; bl.target="_blank"; bl.rel="noopener noreferrer";
+  bl.style.cssText="appearance:none;border:1px solid var(--line);color:var(--fg);font:inherit;font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;text-decoration:none";
+  rw.appendChild(bl);
+  s.p.appendChild(rw);
+
+  var lb=document.createElement("label"); lb.className="pick"; lb.style.marginTop="12px";
+  var ck=document.createElement("input"); ck.type="checkbox"; ck.checked=usaCtx();
+  var tx=el("div","g"); tx.appendChild(el("span",null,"Usa le ultime note del diario come contesto per il consulente"));
+  ck.onchange=async function(){
+    dPref=Object.assign({},dPref,{usaContesto:ck.checked});
+    if(!ck.checked){ ctxD=""; }
+    try{ if(canWrite)await db.doc("profilo/diario").set(dPref); }catch(e){}
+    if(ck.checked)caricaContestoDiario(true);
+  };
+  lb.appendChild(ck); lb.appendChild(tx); s.p.appendChild(lb);
+
+  s.p.appendChild(el("h3",null,"Note pronte da importare"));
+  s.p.appendChild(el("p","sub","Una nota con il tag caso-team (e senza caso_id), nel diario o nella cartella Gestione gruppi, può diventare un caso."));
+  if(!daImportare.length){
+    var e0=el("div","empty"); e0.appendChild(el("p",null,"Nessuna nota in attesa."));
+    s.p.appendChild(e0);
+  }
+  daImportare.forEach(function(n){
+    var c=el("div","card"); c.appendChild(el("div","t",n.title));
+    c.appendChild(el("div","p",n.testo.slice(0,240)));
+    var r=el("div","row");
+    var bi=el("button",null,"Importa come caso");
+    bi.disabled=!canWrite||!sample;
+    bi.onclick=function(){ s.back.remove(); sheetArchivia("",{titolo:n.title,testo:n.testo,fileId:n.id}); };
+    var bx=el("button","del","Ignora");
+    bx.onclick=function(){ segnaTrattata(n.id); c.remove(); };
+    r.appendChild(bi); r.appendChild(bx); c.appendChild(r); s.p.appendChild(c);
+  });
+  if(dTraccia.length){
+    s.p.appendChild(el("h3",null,"Traccia"));
+    var pre=el("pre",null,dTraccia.join("\n"));
+    pre.style.cssText="font-size:10.5px;white-space:pre-wrap;word-break:break-all;color:var(--muted);max-height:180px;overflow:auto;margin:0";
+    s.p.appendChild(pre);
+  }
+  s.fine();
+}
+async function diarioAvvia(){
+  if(!mcp)return;
+  try{
+    var g=await db.doc("profilo/diario").get();
+    dPref=g.exists?(g.data()||{}):{};
+  }catch(e){ dPref={}; }
+  await caricaContestoDiario(true);
+  await sincronizza();
+  document.addEventListener("visibilitychange",function(){
+    if(!document.hidden&&Date.now()-ultimoSync>120000)sincronizza();
+  });
 }
 
 /* ===================== avvio ===================== */
@@ -1292,12 +1797,21 @@ document.getElementById("vParla").onclick=function(){setVista("parla");};
 document.getElementById("vPlancia").onclick=function(){setVista("plancia");};
 document.getElementById("tAperti").onclick=sheetImpegni;
 document.getElementById("tContesto").onclick=sheetProfilo;
+document.getElementById("tDiario").onclick=sheetDiario;
 document.getElementById("tGuida").onclick=function(){ setVista(vista==="guida"?"parla":"guida"); };
 document.getElementById("tNuova").onclick=nuovaConversazione;
 document.getElementById("attachedX").onclick=function(){ allegata=null; mostraAllegata(); };
 bSend.onclick=function(){invia();};
 box.addEventListener("input",autoAlza);
 box.addEventListener("keydown",function(e){ if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); invia(); } });
+/* la testata si stacca quando il contenuto le scorre sotto */
+(function(){
+  var m=document.getElementById("main"), h=document.querySelector("header"), ultimo=false;
+  m.addEventListener("scroll",function(){
+    var giu=m.scrollTop>6;
+    if(giu!==ultimo){ ultimo=giu; h.classList.toggle("staccata",giu); }
+  },{passive:true});
+})();
 ripresa=leggiSessione();
 home(); autoAlza();
 
@@ -1307,6 +1821,7 @@ home(); autoAlza();
   try{ sample=await c.use("sample"); }catch(e){ sample=null; }
   if(!sample) hint.textContent="Questa visualizzazione non raggiunge Claude. Apri la pagina dalla tua galleria degli artifact.";
   try{ downloads=await c.use("downloads"); }catch(e){ downloads=null; }
+  try{ mcp=await c.use("mcp"); }catch(e){ mcp=null; }
   var user=null; try{ user=await c.use("user"); }catch(e){}
   canWrite = user ? (user.can ? (user.can("data.write")!==false) : (user.canEdit?user.canEdit():false)) : false;
   try{ db=await c.use("db"); }catch(e){ db=null; }
@@ -1315,11 +1830,11 @@ home(); autoAlza();
   try{
     db.collection("schede").orderBy("aggiornata","desc").limit(80).onSnapshot(function(snap){
       clearTimeout(t1); dbPronto=true;
-      schede=snap.docs.map(function(d){ var v=d.data()||{}; v.id=d.id; return v; });
+      schede=snap.docs.map(function(d){ var v=Object.assign({},d.data()||{}); v.id=d.id; return v; });
       if(vista==="plancia")disegnaPlancia();
     },function(){ clearTimeout(t1); dbPronto=true; });
     db.collection("impegni").limit(400).onSnapshot(function(snap){
-      impegni=snap.docs.map(function(d){ var v=d.data()||{}; v.id=d.id; return v; });
+      impegni=snap.docs.map(function(d){ var v=Object.assign({},d.data()||{}); v.id=d.id; return v; });
       aggiornaBadge();
       if(vista==="plancia")disegnaPlancia(); else if(!turni.length)home();
     },function(){});
@@ -1327,5 +1842,6 @@ home(); autoAlza();
       profilo=snap.exists?(snap.data()||null):null; if(vista==="parla"&&!turni.length)home();
     },function(){});
   }catch(e){ clearTimeout(t1); db=null; }
+  diarioAvvia();
 })();
 </script>
