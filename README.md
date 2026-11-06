@@ -4,12 +4,21 @@ Set di agent per **Claude Code** / **Claude Agent SDK** a supporto del people ma
 lettura delle dinamiche di gruppo, preparazione dei feedback, gestione del cambiamento
 organizzativo e comunicazione interna.
 
-Un agent orchestratore convoca quattro specialisti e restituisce una risposta unica e operativa:
-diagnosi → ipotesi da verificare → piano a 7/30/90 giorni → le parole da dire → rischi.
+Due componenti, con usi diversi:
 
-## Contenuto
+- **5 agent** — un orchestratore che convoca quattro specialisti e restituisce una risposta
+  unica e operativa: diagnosi → ipotesi da verificare → piano a 7/30/90 giorni → le parole da
+  dire → rischi. Serve quando la situazione è confusa e va capita.
+- **8 skill** — workflow ripetibili con raccolta guidata, template e output standard.
+  Servono quando sai già cosa devi fare e vuoi farlo bene ogni volta.
 
-I file degli agent sono in [`Gestione gruppi/`](./Gestione%20gruppi).
+> L'agent *ragiona* sulla situazione. La skill *esegue una procedura*.
+> Se non sai da dove partire, descrivi il problema e lascia lavorare `people-manager`.
+> Se sai già che devi preparare un feedback o un piano di change, chiama la skill.
+
+## Agent
+
+I file sono in [`Gestione gruppi/`](./Gestione%20gruppi).
 
 | File | Ruolo | Modelli |
 |---|---|---|
@@ -19,19 +28,39 @@ I file degli agent sono in [`Gestione gruppi/`](./Gestione%20gruppi).
 | `change-architect.md` | Roadmap di cambiamento: coalizione, quick win, neutral zone, metriche di adozione | Kotter 8 steps, ADKAR, Lewin, Bridges, SCARF |
 | `communication-strategist.md` | Mappa stakeholder, sequenza temporale, testi pronti per canale, Q&A scomode | SCARF applicato al wording |
 
+## Skill
+
+I file sono in [`Skills/`](./Skills), una cartella per skill con dentro `SKILL.md`.
+
+| Skill | Cosa produce | Quando |
+|---|---|---|
+| `diagnosi-team` | scheda team con stadio Tuckman, punto di leva, interventi, metriche | il team non gira, silenzi in riunione, gruppo rimescolato |
+| `prepara-feedback` | lo script della conversazione, con le risposte alle reazioni probabili | feedback correttivo o di riconoscimento, richiamo, review |
+| `prepara-1to1` | agenda, domande scelte, cosa ascoltare, follow-up | 1:1 ricorrente, check-in su carico o motivazione, carriera |
+| `gestisci-conflitto` | classificazione, interessi vs posizioni, percorso di mediazione | due persone non si parlano, due team si rimpallano |
+| `facilita-retrospettiva` | scaletta minuto per minuto, domande, cosa fare se si blocca | retrospettiva, team charter, norm-setting, workshop |
+| `piano-cambiamento` | roadmap a fasi con owner, quick win, metriche di adozione | riorganizzazione, nuovo gestionale, adozione mancata |
+| `annuncio-organizzativo` | mappa stakeholder, sequenza, testi pronti per canale, Q&A | annuncio, cattiva notizia, cascading, town hall |
+| `inserimento-nuovo` | piano 30/60/90 **più** l'adattamento del gruppo che riceve | nuovo assunto, trasferimento interno, nuovo manager |
+
+Le skill si richiamano a vicenda dove ha senso: `diagnosi-team` precede
+`facilita-retrospettiva` (il format si scegli sullo stadio del gruppo), e `piano-cambiamento`
+precede `annuncio-organizzativo` (la comunicazione esegue il piano, non lo sostituisce).
+
 ## Installazione
 
-Copia i cinque file `.md` in una delle due posizioni:
-
 ```bash
-# globali, disponibili in ogni progetto
+# agent — globali, disponibili in ogni progetto
 cp "Gestione gruppi"/*.md ~/.claude/agents/
 
-# oppure di progetto, versionabili con il repo
-cp "Gestione gruppi"/*.md <radice-progetto>/.claude/agents/
+# skill — una cartella per skill
+cp -R Skills/* ~/.claude/skills/
 ```
 
-Non serve registrarli: il riconoscimento avviene dal frontmatter YAML in testa a ogni file.
+Per installarli solo su un progetto, usa `<radice-progetto>/.claude/agents/` e
+`<radice-progetto>/.claude/skills/`.
+
+Non serve registrare nulla: il riconoscimento avviene dal frontmatter YAML in testa a ogni file.
 
 ## Uso
 
@@ -48,6 +77,14 @@ usa change-architect: stiamo introducendo un nuovo gestionale e metà reparto lo
 ```
 
 I sub-agent sono invocabili anche singolarmente, quando sai già quale angolo ti serve.
+
+Le skill si invocano con lo slash, oppure si attivano da sole sulla descrizione:
+
+```
+/diagnosi-team
+/prepara-feedback
+/piano-cambiamento
+```
 
 ## Modelli di riferimento
 
