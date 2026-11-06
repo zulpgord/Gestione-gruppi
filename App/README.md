@@ -38,13 +38,54 @@ le *runtime capabilities* dell'Artifact.
 - **Scarica.** Il piano scritto esce come file `.md` tramite la capability `downloads`, da
   allegare a una mail invece di copiarlo a mano.
 
+## Versione 3 — la plancia
+
+Seconda vista, accanto alla conversazione. Legge gli stessi dati, non ne aggiunge di nuovi
+a mano.
+
+- **Riga KPI** — casi segnati, in lavorazione, risolti, e impegni oltre la data.
+- **Avanzamento** — un numero: quota di impegni presi che risultano chiusi, con il conteggio
+  accanto. Sotto il titolo c'è scritto cosa *non* misura: se il problema è risolto. Uno score
+  senza la sua definizione è un numero che si presta a essere letto male.
+- **Impegni chiusi per settimana** — otto settimane, barre, una sola serie (quindi nessuna
+  legenda: il titolo nomina il dato), tooltip al passaggio e una vista tabella alternativa.
+  Serve a vedere la cosa che conta: una riga piatta a zero con casi aperti vuol dire che il
+  follow-up si è fermato.
+- **Casi** — per ognuno lo stadio del gruppo come percorso a cinque passi, la sicurezza
+  psicologica a tre tacche, i bisogni SCARF sotto pressione, la barra degli impegni, la
+  prossima scadenza, e i pulsanti per metterlo in lavorazione, risolverlo o riaprirlo.
+
+### Il tocco HR, come informazione e non come decorazione
+
+Lo stadio Tuckman e il livello di sicurezza psicologica erano già nelle schede, ma come testo
+libero: illeggibili a colpo d'occhio e inutilizzabili. Ora l'estrazione restituisce anche
+`stadioCodice`, `sicurezzaLivello` e `scarf`, con le definizioni operative nel prompt
+(storming = conflitto su priorità e metodo; sicurezza bassa = non si ammettono errori e il
+dissenso non arriva in riunione). Diventano un percorso, un indicatore e cinque pastiglie —
+e dove la sicurezza è bassa la plancia lo dice a parole: *qui si interviene prima di tutto
+il resto*.
+
+I valori estratti sono correggibili a mano prima del salvataggio: due menu e cinque caselle
+nel pannello Archivia.
+
+### Colore
+
+Gli stati non si affidano mai alla tinta: ogni pastiglia porta puntino **e** parola. Non è
+pignoleria — il validatore della palette misura i colori di stato *warning* e *serious* a
+1,77 e 2,55 di contrasto sulla superficie chiara, cioè quasi invisibili come riempimento, e
+rosso contro verde sono a ΔE 4,1 in deuteranopia. Le barre dei dati usano il blu sequenziale,
+distinto dall'ocra dell'interfaccia, così un segno di dato non si confonde con un comando.
+
 ## Modello dati
 
 | Percorso | Cosa contiene |
 |---|---|
-| `schede/<id>` | `titolo`, i sei campi della scheda, `aggiornata` |
-| `impegni/<id>` | `testo`, `chi`, `scadenza` (AAAA-MM-GG), `fatto`, `scheda`, `creato` |
+| `schede/<id>` | `titolo`, `stato` (aperto·corso·risolto), i sei campi di testo, `stadioCodice`, `sicurezzaLivello`, `scarf[]`, `aggiornata`, `creata` |
+| `impegni/<id>` | `testo`, `chi`, `scadenza` (AAAA-MM-GG), `fatto`, `chiuso`, `scheda`, `creato` |
 | `profilo/mio` | i cinque campi del contesto, `aggiornato` |
+
+`impegni.chiuso` è l'unica fonte del grafico settimanale, e `impegni.scheda` collega gli
+impegni al caso per nome: rinominare un caso scollega i suoi impegni.
 
 La conversazione in corso non sta nel database: è una comodità del singolo dispositivo e vive
 in `localStorage`.
