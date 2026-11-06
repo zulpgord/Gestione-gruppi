@@ -1,0 +1,495 @@
+<title>Gestione gruppi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<style>
+/* Layout: una colonna operativa — testata fissa, trascrizione scorrevole, console di input in basso. */
+:root{
+  --bg:#f1f2ef; --surface:#fbfbf9; --surface-2:#e7e9e4; --fg:#16181b; --muted:#5b6066;
+  --line:#d3d6d0; --accent:#9c5410; --accent-ink:#fff; --signal:#0e635c; --warn:#8a3312;
+  --font-ui:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-read:"Source Serif 4",Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14161a; --surface:#1c1f24; --surface-2:#262a30; --fg:#e9e7e2; --muted:#9ba1a8;
+  --line:#2e3238; --accent:#e5962e; --accent-ink:#17181a; --signal:#4fb3a7; --warn:#e0795a;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14161a; --surface:#1c1f24; --surface-2:#262a30; --fg:#e9e7e2; --muted:#9ba1a8;
+  --line:#2e3238; --accent:#e5962e; --accent-ink:#17181a; --signal:#4fb3a7; --warn:#e0795a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);display:flex;flex-direction:column;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{width:100%;max-width:780px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* testata */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+header .wrap{padding-block:9px;display:flex;align-items:center;gap:10px}
+.mark{font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.mark span{display:block;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.spacer{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--bg);flex:none}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:11.5px;font-weight:600;
+  padding:6px 10px;cursor:pointer;letter-spacing:.02em}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.ico{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:11.5px;font-weight:600;
+  padding:6px 9px;border-radius:7px;cursor:pointer;flex:none;white-space:nowrap}
+.ico:hover{border-color:var(--accent)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* trascrizione */
+main{flex:1;overflow-y:auto;overscroll-behavior:contain}
+main .wrap{padding-block:18px 8px;display:flex;flex-direction:column;gap:16px}
+
+.intro h1{font-family:var(--font-read);font-weight:600;font-size:clamp(21px,5.4vw,27px);line-height:1.2;margin:0 0 8px;
+  text-wrap:balance;letter-spacing:-.015em}
+.intro p{font-family:var(--font-read);font-size:15.5px;line-height:1.55;color:var(--muted);margin:0 0 4px;max-width:58ch}
+.note{border-left:2px solid var(--signal);padding:2px 0 2px 11px;margin:14px 0 0}
+.note p{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0;font-family:var(--font-ui)}
+.kicker{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:18px 0 9px}
+
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:7px}
+.chip{appearance:none;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;
+  padding:9px 11px;border-radius:9px;cursor:pointer;min-width:0}
+.chip:hover{border-color:var(--accent)}
+.chip b{display:block;font-size:12.5px;font-weight:600;margin-bottom:2px}
+.chip i{display:block;font-style:normal;font-size:11px;line-height:1.35;color:var(--muted)}
+
+.turn{min-width:0}
+.who{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+  display:flex;align-items:center;gap:8px}
+.mine .body{background:var(--surface-2);border-radius:10px;padding:10px 13px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;
+  word-break:break-word}
+.said{font-family:var(--font-read)}
+.said>*{margin:0 0 .72em}
+.said>*:last-child{margin-bottom:0}
+.said{font-size:16px;line-height:1.6}
+.said h2{font-family:var(--font-ui);font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--accent);margin:1.5em 0 .5em;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.said h1{font-family:var(--font-ui);font-size:17px;font-weight:700;margin:1.1em 0 .5em;letter-spacing:-.01em}
+.said h3{font-family:var(--font-ui);font-size:13.5px;font-weight:700;margin:1.2em 0 .35em}
+.said h2:first-child,.said h1:first-child{margin-top:0}
+.said strong{font-weight:600}
+.said ul,.said ol{padding-left:1.15em}
+.said li{margin-bottom:.3em}
+.said code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86em;background:var(--surface-2);padding:1px 4px;border-radius:4px}
+.said blockquote{margin-left:0;border-left:2px solid var(--accent);padding-left:12px;color:var(--muted)}
+.said hr{border:0;border-top:1px solid var(--line);margin:1.3em 0}
+.tbl{overflow-x:auto;margin:0 0 .72em}
+.said table{border-collapse:collapse;font-family:var(--font-ui);font-size:12.5px;min-width:100%}
+.said th,.said td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+.said th{background:var(--surface-2);font-weight:600;font-size:11px;letter-spacing:.03em;text-transform:uppercase}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.acts button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:11px;
+  font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer}
+.acts button:hover{border-color:var(--accent);color:var(--fg)}
+.thinking{font-size:13px;color:var(--muted);font-style:italic}
+.err{border-left:2px solid var(--warn);padding-left:11px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+
+/* console */
+footer{flex:none;background:var(--surface);border-top:1px solid var(--line)}
+footer .wrap{padding-block:9px 11px}
+.attached{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--signal);font-weight:600;margin-bottom:7px}
+.attached button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:14px;line-height:1;padding:0}
+.console{display:flex;gap:8px;align-items:flex-end}
+textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:15px;line-height:1.45;color:var(--fg);background:var(--bg);
+  border:1px solid var(--line);border-radius:9px;padding:9px 11px;max-height:34vh}
+textarea::placeholder{color:var(--muted)}
+.send{appearance:none;border:0;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:12.5px;font-weight:700;
+  padding:10px 14px;border-radius:9px;cursor:pointer;flex:none}
+.send[disabled]{opacity:.45;cursor:default}
+.hint{font-size:10.5px;color:var(--muted);margin-top:7px;line-height:1.4}
+
+/* pannello schede */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,11,13,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet>div{background:var(--surface);width:100%;max-width:780px;max-height:86%;overflow-y:auto;border-radius:14px 14px 0 0;
+  border-top:1px solid var(--line);
+  padding:16px max(16px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
+.sheet h2{font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin:0 0 3px}
+.sheet .sub{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.45}
+.card{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:7px;background:var(--bg)}
+.card .t{font-size:13.5px;font-weight:600;margin-bottom:2px}
+.card .m{font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:7px}
+.card .p{font-size:12.5px;color:var(--muted);line-height:1.45;max-height:3.9em;overflow:hidden;margin-bottom:9px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.row button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-size:11px;
+  font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer}
+.row button:hover{border-color:var(--accent)}
+.row .del{color:var(--warn)}
+.empty{border:1px dashed var(--line);border-radius:9px;padding:16px;text-align:center}
+.empty p{font-size:13px;color:var(--muted);margin:0;line-height:1.5}
+.newf{display:flex;gap:7px;margin:12px 0 4px}
+.newf input{flex:1;min-width:0;font:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg);color:var(--fg)}
+.sheet .close{margin-top:14px;width:100%;appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);
+  font:inherit;font-size:12.5px;font-weight:600;padding:9px;border-radius:8px;cursor:pointer}
+.offline{border-left:2px solid var(--warn);padding-left:11px;font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="mark">Gestione gruppi<span>People management</span></div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="Registro della risposta">
+      <button id="mVoce" aria-pressed="true">A voce</button>
+      <button id="mScritto" aria-pressed="false">Scritto</button>
+    </div>
+    <button class="ico" id="bSchede">Schede</button>
+    <button class="ico" id="bNuova" title="Nuova conversazione">Nuova</button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap" id="flow">
+    <div class="intro" id="intro">
+      <h1>Racconta cosa è successo.</h1>
+      <p>Dettalo con il microfono della tastiera, come un messaggio vocale. Ti vengono fatte le domande che servono, una per volta, e arrivi alla prima mossa.</p>
+      <div class="note"><p><strong>A voce</strong> per capire la situazione: turni brevi, una domanda per volta. <strong>Scritto</strong> quando vuoi il piano, gli script e le tabelle da rileggere.</p></div>
+      <p class="kicker">Oppure parti da qui</p>
+      <div class="chips" id="chips"></div>
+      <div class="note" style="margin-top:18px"><p>Usa <strong>iniziali o il ruolo</strong> al posto dei nomi.</p></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div id="attached" hidden class="attached">
+      <span id="attachedLbl"></span>
+      <button id="attachedX" aria-label="Togli la scheda allegata">&times;</button>
+    </div>
+    <div class="console">
+      <textarea id="box" rows="1" placeholder="Cosa è successo…" aria-label="Il tuo messaggio"></textarea>
+      <button class="send" id="bSend">Invia</button>
+    </div>
+    <div class="hint" id="hint">Sul telefono: tocca il microfono sulla tastiera e parla.</div>
+  </div>
+</footer>
+
+<script>
+/* ---------- istruzioni permanenti ---------- */
+var ISTR = [
+"Sei un consulente senior di people management e organizational development. Lavori con un manager reale, su persone reali. Parli italiano, diretto e professionale: mai retorica motivazionale, mai complimenti alla domanda, mai preamboli.",
+"",
+"RACCOLTA. Prima di consigliare, capisci. Fai UNA domanda per turno, scegliendo la piu' informativa, e solo su cio' che non sai gia': quante persone e da quanto il team e' in questa forma; cosa e' cambiato negli ultimi sei mesi (ingressi, uscite, nuovo capo, nuovo obiettivo, tagli); l'episodio concreto piu' recente, chi ha fatto cosa quando e davanti a chi; chi parla e chi tace in riunione e se il dissenso arriva in riunione o dopo; il rapporto gerarchico; cosa ha gia' provato e com'e' andata. Massimo sei domande in tutto, poi procedi dichiarando le assunzioni.",
+"Se porta solo giudizi (e' demotivato, e' una persona tossica), chiedi i comportamenti osservabili prima di procedere: una diagnosi costruita su etichette e' inutile.",
+"",
+"LENTI. Usane una o due, non cinque.",
+"Clima, silenzi, team rimescolato, performance collettiva giu': stadio di sviluppo del gruppo e sicurezza psicologica. Se la sicurezza e' bassa e' li' che si interviene, e qualunque altra cosa su un gruppo che non si sente sicuro produce teatro: dillo e non proporre altro. Verifica sempre le regressioni: nuovo membro, nuovo capo, obiettivo cambiato o taglio riportano il gruppo a litigare, ed e' la spiegazione piu' probabile.",
+"Feedback o conversazione difficile: separa fatti, impatto e interpretazioni; valuta le cinque minacce (status, prevedibilita', autonomia, appartenenza, equita') e mitiga quelle alte. Prima verifica tre cose: l'aspettativa era stata dichiarata? il problema e' della persona o del sistema? e' la prima volta che glielo dice? Se l'aspettativa non era chiara non e' un feedback, e' un chiarimento di aspettative.",
+"Due persone che non si parlano, due reparti che si rimpallano: classifica il conflitto in di compito (utile, serve un criterio di decisione), di processo (serve ridisegnare i confini, non una mediazione), di relazione (il piu' costoso), di status (il piu' ignorato). Due persone che litigano ogni settimana sullo stesso passaggio non hanno un problema di carattere: hanno un confine di ruolo non definito. Verificalo sempre prima.",
+"Riorganizzazione, nuovo processo, nessuno lo adotta: chiedi cosa perde ciascun gruppo e com'e' finito il cambiamento precedente, i due dati piu' predittivi e i meno documentati. Poi trova dove si e' rotta la catena: non ha capito il perche' / ha capito ma non gli conviene / non sa come si fa / sa ma non ci riesce / ha ricominciato come prima. L'intervento e' diverso per ognuno, e rispondere con piu' formazione a chi non ha convenienza e' l'errore piu' comune e costoso.",
+"Messaggio da comunicare: la sequenza conta piu' del testo. Nessuno deve sapere di se' stesso da un canale collettivo. I capi intermedi vanno armati 24-48 ore prima. Cattive notizie presto, chiare e intere, senza tre paragrafi positivi in apertura.",
+"Inserimento di una persona nuova: non e' solo onboarding individuale, e' un cambiamento del gruppo. Progetta anche l'adattamento di chi la riceve e parla prima con chi perde qualcosa.",
+"",
+"LIMITI, sempre validi. Non diagnosticare persone e non usare etichette psicologiche o cliniche: solo comportamenti e impatti. Le motivazioni di chi non e' nella stanza sono ipotesi verificabili, mai conclusioni. Non scrivere script manipolatori o pressioni indebite: il feedback serve a far capire, non a far cedere. Non costruire piani o comunicazioni che richiedono di nascondere informazioni che le persone hanno diritto di conoscere. Se il cambiamento e' mal concepito nel merito, dillo prima di progettarne l'esecuzione. Se il problema e' del manager (aspettative mai dichiarate, priorita' cambiate in corsa, carico insostenibile), dillo prima di tutto il resto. Interrompi e indica HR o legale, senza proseguire con i modelli, se emergono molestie, discriminazione, minacce, rischi per la salute, questioni disciplinari o obblighi di consultazione sindacale: non sono conflitti da mediare, sono condotte. Il manager resta responsabile: dai opzioni con i loro costi, non un'unica strada.",
+"Nei testi che scrivi usa iniziali o il solo ruolo al posto dei nomi."
+].join("\n");
+
+var MODO = {
+  voce: "\n\nREGISTRO ORA: A VOCE. Questo messaggio viene letto ad alta voce o su un telefono mentre il manager cammina. Rispondi in 2-5 frasi, mai piu'. Una sola domanda, in chiusura, oppure una sola azione: non entrambe. Nessun titolo, nessun elenco, nessuna tabella, nessun grassetto: solo frasi. Non nominare i modelli (non dire Tuckman, SCARF, Kotter): di' la sostanza con parole tue. Se hai capito abbastanza, da' la lettura della situazione in tre frasi e la prima cosa da fare, poi offri in una riga di preparare il piano scritto.",
+  scritto: "\n\nREGISTRO ORA: SCRITTO. Serve il documento da rileggere e usare. Struttura con titoli di secondo livello, tabelle dove servono, e script parola per parola in italiano parlato dove c'e' una conversazione da tenere. Sezioni utili, quelle che servono a questo caso: cosa sta succedendo (qui puoi nominare il modello), le ipotesi da verificare e come verificarle, il piano diviso in questa settimana / 30 giorni / 90 giorni, le parole da dire, i rischi e i segnali d'allarme da osservare. Niente sezioni vuote di riempimento."
+};
+
+var AVVII = [
+ ["Il team non gira","clima, silenzi, performance giu'","Devo capire cosa sta succedendo nel mio team. "],
+ ["Devo dare un feedback","correttivo o di riconoscimento","Devo dare un feedback a una persona del mio team. "],
+ ["Preparare un 1:1","colloquio ricorrente o di carriera","Devo preparare un colloquio individuale. "],
+ ["Due che non si parlano","conflitto fra persone o gruppi","Ho un conflitto fra due persone che blocca il lavoro. "],
+ ["Condurre una retrospettiva","o definire regole condivise","Devo condurre una retrospettiva con il team. "],
+ ["Gestire un cambiamento","riorganizzazione, nuovo processo","Sto introducendo un cambiamento e trovo resistenze. "],
+ ["Comunicare una notizia","annuncio, decisione impopolare","Devo comunicare una notizia al team. "],
+ ["Inserire una persona nuova","o sono io il nuovo capo","Sta entrando una persona nuova nel team. "]
+];
+
+/* ---------- stato ---------- */
+var turni = [];          /* {role, content} inviati a Claude */
+var modo = "voce";
+var sample = null, db = null, canWrite = false, dbPronto = false;
+var schede = [], allegata = null, ctl = null, inCorso = false;
+var flow = document.getElementById("flow"), intro = document.getElementById("intro");
+var box = document.getElementById("box"), bSend = document.getElementById("bSend");
+var hint = document.getElementById("hint");
+
+/* ---------- utilità ---------- */
+function el(t,c,x){var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e;}
+function scrolla(){var m=document.getElementById("main"); m.scrollTop=m.scrollHeight;}
+function pulisci(html){
+  var d=document.createElement("div"); d.innerHTML=html;
+  d.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(function(n){n.remove();});
+  d.querySelectorAll("*").forEach(function(n){
+    for(var i=n.attributes.length-1;i>=0;i--){
+      var a=n.attributes[i].name, v=n.attributes[i].value||"";
+      if(a.indexOf("on")===0) n.removeAttribute(a);
+      else if((a==="href"||a==="src")&&/^\s*(javascript|data):/i.test(v)) n.removeAttribute(a);
+    }
+  });
+  d.querySelectorAll("table").forEach(function(t){
+    if(t.parentNode&&t.parentNode.className==="tbl")return;
+    var w=document.createElement("div"); w.className="tbl"; t.parentNode.insertBefore(w,t); w.appendChild(t);
+  });
+  d.querySelectorAll("a[href]").forEach(function(a){a.target="_blank"; a.rel="noopener noreferrer";});
+  return d.innerHTML;
+}
+function rendi(node,testo){
+  if(window.marked&&typeof window.marked.parse==="function"){
+    try{ node.innerHTML=pulisci(window.marked.parse(testo,{headerIds:false,mangle:false})); return; }catch(e){}
+  }
+  node.textContent=testo;
+}
+function data(iso){
+  try{return new Date(iso).toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"});}catch(e){return "";}
+}
+
+/* ---------- voce in uscita ---------- */
+var puoLeggere = ("speechSynthesis" in window);
+var vocIt = null;
+function trovaVoce(){
+  if(!puoLeggere)return;
+  var v=window.speechSynthesis.getVoices()||[];
+  vocIt = v.filter(function(x){return /^it/i.test(x.lang);})[0] || null;
+}
+if(puoLeggere){ trovaVoce(); window.speechSynthesis.onvoiceschanged=trovaVoce; }
+function leggi(testo,btn){
+  if(!puoLeggere)return;
+  var ss=window.speechSynthesis;
+  if(ss.speaking){ ss.cancel(); document.querySelectorAll(".leggi").forEach(function(b){b.textContent="Ascolta";}); return; }
+  var t=document.createElement("div"); t.innerHTML=pulisci(testo);
+  var piano=(t.textContent||"").replace(/\s+/g," ").trim();
+  if(!piano)return;
+  var u=new SpeechSynthesisUtterance(piano);
+  u.lang="it-IT"; if(vocIt)u.voice=vocIt; u.rate=1.04;
+  u.onend=u.onerror=function(){ if(btn)btn.textContent="Ascolta"; };
+  if(btn)btn.textContent="Ferma";
+  ss.speak(u);
+}
+
+/* ---------- trascrizione ---------- */
+function turnoMio(testo){
+  if(intro){intro.remove(); intro=null;}
+  var t=el("div","turn mine"); t.appendChild(el("div","who","Tu"));
+  t.appendChild(el("div","body",testo)); flow.appendChild(t); scrolla();
+}
+function turnoSuo(){
+  if(intro){intro.remove(); intro=null;}
+  var t=el("div","turn");
+  var w=el("div","who","Consulente");
+  var stop=el("button",null,"Ferma"); stop.style.cssText="appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;cursor:pointer";
+  stop.onclick=function(){ if(ctl)ctl.abort(); };
+  w.appendChild(stop);
+  var b=el("div","said"); b.appendChild(el("div","thinking","Sto ragionando…"));
+  t.appendChild(w); t.appendChild(b); flow.appendChild(t); scrolla();
+  return {turno:t, corpo:b, intesta:w, stop:stop};
+}
+function azioni(vista,testo){
+  vista.stop.remove();
+  var a=el("div","acts");
+  if(puoLeggere){
+    var l=el("button","leggi","Ascolta"); l.onclick=function(){leggi(testo,l);}; a.appendChild(l);
+  }
+  var c=el("button",null,"Copia");
+  c.onclick=function(){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(testo).then(function(){c.textContent="Copiato";
+        setTimeout(function(){c.textContent="Copia";},1400);}).catch(function(){selez(vista.corpo);});
+    } else selez(vista.corpo);
+  };
+  a.appendChild(c);
+  if(modo==="voce"){
+    var p=el("button",null,"Preparami il piano scritto");
+    p.onclick=function(){ setModo("scritto"); invia("Preparami il piano scritto su quello di cui abbiamo parlato."); };
+    a.appendChild(p);
+  }
+  if(db&&canWrite){
+    var s=el("button",null,"Salva come scheda");
+    s.onclick=function(){ apriSchede(testo); }; a.appendChild(s);
+  }
+  vista.turno.appendChild(a);
+}
+function selez(n){ try{var r=document.createRange(); r.selectNodeContents(n);
+  var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);}catch(e){} }
+function errore(vista,msg){
+  vista.stop.remove();
+  var e=el("div","err",msg); vista.turno.appendChild(e); scrolla();
+}
+
+/* ---------- invio ---------- */
+var SPIEGA = {
+  not_granted:"Non hai dato a questa pagina il permesso di usare Claude. Riapri la pagina e consenti, oppure aprila dalle tue impostazioni dei permessi.",
+  sampling_disabled:"Claude non è disponibile su questo account.",
+  not_declared:"Questa pagina non può più usare Claude.",
+  capability_disabled:"Claude non è utilizzabile in questa visualizzazione.",
+  capability_removed:"Questa app di Claude è troppo vecchia per questa funzione.",
+  rate_limited:"Hai raggiunto il limite di richieste. Riprova fra qualche minuto.",
+  session_expired:"La sessione è scaduta: rientra in Claude e riprova.",
+  prompt_too_large:"La conversazione è troppo lunga. Tocca Nuova e riparti, allegando una scheda se serve il contesto.",
+  refused:"La richiesta non è stata accolta così com'è. Riformulala, togliendo i dati personali non necessari.",
+  empty_completion:"Non è arrivata nessuna risposta. Chiedi una cosa per volta.",
+  upstream_error:"Problema di collegamento. Il testo scritto fin qui resta; riprova fra poco."
+};
+
+function setModo(m){
+  modo=m;
+  document.getElementById("mVoce").setAttribute("aria-pressed", m==="voce"?"true":"false");
+  document.getElementById("mScritto").setAttribute("aria-pressed", m==="scritto"?"true":"false");
+  box.placeholder = m==="voce" ? "Cosa è successo…" : "Cosa ti serve per iscritto…";
+}
+
+async function invia(testoDato){
+  if(inCorso)return;
+  var testo=(testoDato!=null?testoDato:box.value).trim();
+  if(!testo)return;
+  if(!sample){
+    if(intro){intro.remove(); intro=null;}
+    flow.appendChild(el("div","err","Questa pagina parla con Claude solo quando è aperta dentro Claude. Aprila dalla tua galleria degli artifact."));
+    scrolla(); return;
+  }
+  var daInviare=testo;
+  if(allegata){
+    daInviare="Contesto da una scheda salvata, intitolata "+allegata.titolo+":\n\n"+allegata.testo+"\n\n---\n\n"+testo;
+    allegata=null; mostraAllegata();
+  }
+  if(testoDato==null){ box.value=""; autoAlza(); }
+  turnoMio(testo);
+  turni.push({role:"user",content:daInviare});
+  if(turni.length>22) turni=turni.slice(turni.length-22);
+  if(turni[0].role!=="user") turni.shift();
+
+  inCorso=true; bSend.disabled=true; bSend.textContent="…";
+  var vista=turnoSuo();
+  ctl=new AbortController();
+  var ultimo=turni.length-1;
+  var input=[{role:"user",content:ISTR}].concat(turni.map(function(t,i){
+    return (i===ultimo&&t.role==="user") ? {role:"user",content:t.content+MODO[modo]} : t;
+  }));
+  try{
+    var r=await sample(input,{
+      cache:false, signal:ctl.signal, modelTier:(modo==="scritto"?"complex":"default"),
+      onText:function(u){ rendi(vista.corpo,u.text); scrolla(); }
+    });
+    rendi(vista.corpo,r.text);
+    turni.push({role:"assistant",content:r.text});
+    azioni(vista,r.text);
+    if(r.truncated) errore(vista,"La risposta si è interrotta per lunghezza. Chiedi una sezione per volta.");
+  }catch(e){
+    var cod=(e&&e.code)||"upstream_error";
+    if(e&&e.text){ rendi(vista.corpo,e.text); turni.push({role:"assistant",content:e.text}); azioni(vista,e.text); }
+    else { vista.corpo.innerHTML=""; vista.stop.remove(); }
+    if(cod!=="cancelled") errore(vista, SPIEGA[cod]||SPIEGA.upstream_error);
+    else if(!e.text) vista.turno.remove();
+  }finally{
+    inCorso=false; bSend.disabled=false; bSend.textContent="Invia"; ctl=null; scrolla();
+  }
+}
+
+function autoAlza(){ box.style.height="auto"; box.style.height=Math.min(box.scrollHeight, window.innerHeight*0.34)+"px"; }
+
+/* ---------- schede (db) ---------- */
+function mostraAllegata(){
+  var w=document.getElementById("attached");
+  if(allegata){ document.getElementById("attachedLbl").textContent="Scheda allegata: "+allegata.titolo; w.hidden=false; }
+  else w.hidden=true;
+}
+function apriSchede(daSalvare){
+  var back=el("div","sheet"); var p=el("div");
+  p.appendChild(el("h2",null,"Schede dei team"));
+  p.appendChild(el("p","sub","Lo stadio di un gruppo ha senso solo in serie storica. Qui resta quello che hai già stabilito, e lo puoi allegare a una conversazione nuova."));
+  if(!db){
+    p.appendChild(el("div","offline","Le schede hanno bisogno di Claude e di essere firmato: questa visualizzazione non le raggiunge."));
+  }else{
+    if(!dbPronto) p.appendChild(el("div","offline","Sto ancora leggendo le schede salvate."));
+    if(daSalvare&&canWrite){
+      var f=el("div","newf");
+      var i=document.createElement("input"); i.type="text"; i.placeholder="Nome del team o della persona (iniziali)"; i.id="nuovoTit";
+      var b=el("button",null,"Salva"); b.className=""; b.style.cssText="appearance:none;border:0;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:12.5px;font-weight:700;padding:8px 13px;border-radius:8px;cursor:pointer";
+      b.onclick=async function(){
+        var t=(i.value||"").trim(); if(!t){i.focus();return;}
+        b.disabled=true; b.textContent="…";
+        try{
+          await db.collection("schede").add({titolo:t,testo:daSalvare,aggiornata:new Date().toISOString()});
+          back.remove();
+        }catch(e){ b.disabled=false; b.textContent="Salva";
+          f.parentNode.insertBefore(el("div","offline","Non è stato possibile salvare: "+((e&&e.code)||"errore")+"."),f.nextSibling); }
+      };
+      f.appendChild(i); f.appendChild(b); p.appendChild(f);
+    }
+    if(!schede.length&&dbPronto){
+      var em=el("div","empty"); em.appendChild(el("p","Nessuna scheda. Quando una conversazione arriva a una diagnosi utile, tocca Salva come scheda sotto la risposta."));
+      p.appendChild(em);
+    }
+    schede.forEach(function(s){
+      var c=el("div","card");
+      c.appendChild(el("div","t",s.titolo||"Senza nome"));
+      c.appendChild(el("div","m",data(s.aggiornata)));
+      c.appendChild(el("div","p",(s.testo||"").replace(/[#*_`>|\-]+/g," ").replace(/\s+/g," ").slice(0,220)));
+      var r=el("div","row");
+      var a=el("button",null,"Allega alla conversazione");
+      a.onclick=function(){ allegata={titolo:s.titolo,testo:s.testo}; mostraAllegata(); back.remove(); box.focus(); };
+      r.appendChild(a);
+      if(canWrite){
+        var d=el("button","del","Elimina");
+        d.onclick=async function(){
+          if(d.textContent!=="Confermi?"){ d.textContent="Confermi?"; return; }
+          d.disabled=true; try{ await db.doc("schede/"+s.id).delete(); }catch(e){ d.disabled=false; d.textContent="Elimina"; }
+        };
+        r.appendChild(d);
+      }
+      c.appendChild(r); p.appendChild(c);
+    });
+  }
+  var x=el("button","close","Chiudi"); x.onclick=function(){back.remove();};
+  p.appendChild(x);
+  back.appendChild(p);
+  back.onclick=function(ev){ if(ev.target===back) back.remove(); };
+  document.body.appendChild(back);
+}
+
+/* ---------- avvio ---------- */
+AVVII.forEach(function(a){
+  var c=el("button","chip"); c.appendChild(el("b",null,a[0])); c.appendChild(el("i",null,a[1]));
+  c.onclick=function(){ box.value=a[2]; autoAlza(); box.focus(); };
+  document.getElementById("chips").appendChild(c);
+});
+document.getElementById("mVoce").onclick=function(){setModo("voce");};
+document.getElementById("mScritto").onclick=function(){setModo("scritto");};
+document.getElementById("bSchede").onclick=function(){apriSchede(null);};
+document.getElementById("bNuova").onclick=function(){
+  if(ctl)ctl.abort();
+  if(puoLeggere&&window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+  location.reload();
+};
+document.getElementById("attachedX").onclick=function(){ allegata=null; mostraAllegata(); };
+bSend.onclick=function(){invia();};
+box.addEventListener("input",autoAlza);
+box.addEventListener("keydown",function(e){
+  if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); invia(); }
+});
+autoAlza();
+
+(async function(){
+  var c=window.claude;
+  if(!c||!c.use){ hint.textContent="Aperta fuori da Claude: puoi leggere la pagina, non parlarci."; return; }
+  try{ sample=await c.use("sample"); }catch(e){ sample=null; }
+  if(!sample) hint.textContent="Questa visualizzazione non raggiunge Claude. Apri la pagina dalla tua galleria degli artifact.";
+  var user=null;
+  try{ user=await c.use("user"); }catch(e){}
+  canWrite = user ? (user.can ? (user.can("data.write")!==false) : (user.canEdit?user.canEdit():false)) : false;
+  try{ db=await c.use("db"); }catch(e){ db=null; }
+  if(db){
+    var scaduto=setTimeout(function(){ if(!dbPronto) dbPronto=false; },10000);
+    try{
+      db.collection("schede").orderBy("aggiornata","desc").limit(60).onSnapshot(function(snap){
+        clearTimeout(scaduto); dbPronto=true;
+        schede=snap.docs.map(function(d){ var v=d.data()||{}; return {id:d.id,titolo:v.titolo,testo:v.testo,aggiornata:v.aggiornata}; });
+      },function(){ clearTimeout(scaduto); dbPronto=true; db=null; });
+    }catch(e){ clearTimeout(scaduto); db=null; }
+  }
+})();
+</script>
